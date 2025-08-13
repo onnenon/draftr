@@ -1,0 +1,49 @@
+# Elixir and Phoenix
+/_build/
+/deps/
+/.elixir_ls/
+/.elixir-tools/
+/.iex.exs
+/.formatter.exs
+/.env*
+/.tool-versions
+/.erlang.cookie
+/erl_crash.dump
+/.vscode/
+/.DS_Store
+*.ez
+*.beam
+*.dump
+*.swp
+*.swo
+*.bak
+*.orig
+*.old
+*.log
+*.db
+*.db-shm
+*.db-wal
+# Node and asset build artifacts
+/assets/node_modules/
+/assets/.next/
+/assets/.nuxt/
+/assets/dist/
+/assets/build/
+/assets/package-lock.json
+/assets/yarn.lock
+/assets/pnpm-lock.yaml
+# Test and coverage
+/cover/
+/test/tmp/
+/.excoveralls
+/.ex_unit/
+# System
+Thumbs.db
+.DS_Store
+.idea/
+*.iml
+*.sublime*
+*.tmproj
+*.tmproject
+*.vscode/
+*.code-workspace
