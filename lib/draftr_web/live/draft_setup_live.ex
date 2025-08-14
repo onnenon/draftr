@@ -5,7 +5,7 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, league_name: "", members: [""], session_id: nil, link: nil)}
+    {:ok, assign(socket, league_name: "", members: [""], session_id: nil, link: nil, full_url: nil)}
   end
 
   @impl true
@@ -38,8 +38,15 @@ defmodule DraftrWeb.DraftSetupLive do
     if league_name != "" and length(members) > 1 do
       session_id = DraftSession.create_session(league_name, members)
       Logger.info("Session created with ID: #{inspect(session_id)}")
-      link = ~p"/draft/#{session_id}"
-      {:noreply, assign(socket, session_id: session_id, link: link)}
+
+      # Generate the path
+      path = ~p"/draft/#{session_id}"
+
+      # Generate the full URL based on the endpoint configuration
+      url = DraftrWeb.Endpoint.url()
+      full_url = "#{url}#{path}"
+
+      {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
       Logger.warning("Invalid draft setup: league_name=#{league_name}, members_count=#{length(members)}")
       {:noreply, put_flash(socket, :error, "Please enter a league name and at least 2 members")}
@@ -75,7 +82,21 @@ defmodule DraftrWeb.DraftSetupLive do
       <%= if @link do %>
         <div class="mt-6 p-4 bg-success text-success-content rounded">
           <p class="mb-2 font-semibold">Share this link with your league members:</p>
-          <p class="bg-base-100 p-2 rounded border border-base-300 text-base-content font-mono text-sm break-all"><%= @link %></p>
+          <div class="flex items-center mb-2">
+            <p id="draft-link" class="bg-base-100 p-2 rounded-l border-l border-t border-b border-base-300 text-base-content font-mono text-sm break-all flex-1"><%= @full_url %></p>
+            <button
+              id="copy-button"
+              phx-hook="CopyToClipboard"
+              data-copy-target="draft-link"
+              class="p-2 bg-base-100 rounded-r border-t border-r border-b border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
+              aria-label="Copy link"
+            >
+              <span class="flex items-center">
+                <.icon name="hero-document-duplicate" class="size-5 text-primary" />
+                <span data-feedback class="ml-1 text-xs hidden sm:inline">Copy</span>
+              </span>
+            </button>
+          </div>
           <div class="mt-3">
             <a href={@link} class="px-4 py-2 bg-info text-info-content rounded inline-block">Go to Draft</a>
           </div>

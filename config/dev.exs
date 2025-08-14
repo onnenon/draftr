@@ -21,6 +21,7 @@ config :draftr, DraftrWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "gHP7ibYIYoud9bvcwaQx/mZOrniuBLfVOJcN9iRVdGQV4EIe76eHX7xjUbZoUZ9k",
+  url: [host: "localhost", port: 4000],
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:draftr, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:draftr, ~w(--watch)]}
