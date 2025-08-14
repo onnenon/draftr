@@ -15,26 +15,26 @@ defmodule DraftrWeb.DraftSetupLive do
 
   def handle_event("form_change", params, socket) do
     league_name = params["league_name"] || ""
-    
+
     # Get all member inputs
     members = socket.assigns.members
     |> Enum.with_index()
     |> Enum.map(fn {_member, idx} ->
       params["member_#{idx}"] || ""
     end)
-    
+
     {:noreply, assign(socket, league_name: league_name, members: members)}
   end
 
   def handle_event("start_draft", params, socket) do
     require Logger
     Logger.info("Start draft event triggered with params: #{inspect(params)}")
-    
+
     members = Enum.filter(socket.assigns.members, &(&1 != ""))
     league_name = String.trim(socket.assigns.league_name)
-    
+
     Logger.info("League name: #{inspect(league_name)}, Members: #{inspect(members)}")
-    
+
     if league_name != "" and length(members) > 1 do
       session_id = DraftSession.create_session(league_name, members)
       Logger.info("Session created with ID: #{inspect(session_id)}")
@@ -75,7 +75,7 @@ defmodule DraftrWeb.DraftSetupLive do
       <%= if @link do %>
         <div class="mt-6 p-4 bg-success text-success-content rounded">
           <p class="mb-2 font-semibold">Share this link with your league members:</p>
-          <p class="text-info underline break-all"><%= @link %></p>
+          <p class="bg-base-100 p-2 rounded border border-base-300 text-base-content font-mono text-sm break-all"><%= @link %></p>
           <div class="mt-3">
             <a href={@link} class="px-4 py-2 bg-info text-info-content rounded inline-block">Go to Draft</a>
           </div>

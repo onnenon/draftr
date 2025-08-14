@@ -79,6 +79,14 @@ defmodule Draftr.DraftSession do
         new_revealed = revealed ++ [next]
         new_session = %{session | remaining: List.delete(remaining, next), revealed: new_revealed}
         new_state = Map.put(state, session_id, new_session)
+
+        # Broadcast the updated draft to all subscribers
+        Phoenix.PubSub.broadcast(
+          Draftr.PubSub,
+          "draft:#{session_id}",
+          {:draft_updated, new_session}
+        )
+
         {:reply, new_revealed, new_state}
     end
   end
