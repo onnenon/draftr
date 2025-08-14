@@ -80,10 +80,10 @@ defmodule DraftrWeb.DraftLive do
       </div>
 
       <div class="mb-6 p-4 bg-base-300/50 rounded-lg shadow-inner">
-        <h2 class="text-lg mb-3 font-semibold">League Members (<%= length(@members) %> total):</h2>
+        <h2 class="text-lg mb-3 font-semibold">Draft Pool (<%= length(@members) %> total):</h2>
         <ul class="flex flex-wrap gap-2">
           <%= for member <- @members do %>
-            <li class={"py-1.5 px-3 rounded-full #{if Map.has_key?(@league_assignments, member), do: "bg-gradient-to-r from-success to-success-focus text-success-content", else: "bg-base-100 border border-base-300"} shadow-sm"}>
+            <li class={"py-1.5 px-3 rounded-full #{if Map.has_key?(@league_assignments, member), do: "bg-base-100 border border-primary", else: "bg-base-100 border border-base-300"} shadow-sm"}>
               <%= member %>
             </li>
           <% end %>
