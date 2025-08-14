@@ -34,10 +34,10 @@ defmodule DraftrWeb.DraftLive do
     revealed = DraftSession.reveal_next_pick(socket.assigns.session_id)
     # Calculate the index of the newly revealed member
     new_reveal_index = length(revealed) - 1
-
-    # Trigger the card flip animation for the newly revealed member
-    socket = push_event(socket, "reveal_card", %{index: new_reveal_index})
-
+    
+    # Trigger the reveal animation for the newly revealed member
+    socket = push_event(socket, "reveal_pick", %{index: new_reveal_index})
+    
     {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
   end
 
@@ -106,34 +106,48 @@ defmodule DraftrWeb.DraftLive do
         </div>
       </div>
 
-      <div id="draft-container" phx-hook="CardFlip" class="pb-4">
+      <div id="draft-container" phx-hook="Reveal" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <%= for league_num <- 1..@num_leagues do %>
-          <h3 class="mt-8 mb-4 text-xl font-semibold text-primary pb-2 border-b-2 border-base-300 flex items-center">
-            <span class="inline-block w-3 h-3 bg-primary rounded-full mr-2"></span>
-            League <%= league_num %>
-          </h3>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-6">
-            <%= for index <- 0..(length(@members) - 1) do %>
-              <%
-                # Calculate if this card should be in this league
-                card_league = rem(index, @num_leagues) + 1
-                is_revealed = index < length(@revealed)
-                member_name = if is_revealed, do: Enum.at(@revealed, index), else: nil
-                is_this_league = card_league == league_num
+          <div class="bg-base-300 rounded-lg p-4 shadow-md">
+            <h3 class="text-xl font-semibold text-primary mb-4 pb-2 border-b border-base-content/20 flex items-center">
+              <span class="inline-block w-3 h-3 bg-primary rounded-full mr-2"></span>
+              League <%= league_num %>
+            </h3>
+            
+            <ol class="list-decimal list-inside space-y-3 pl-2">
+              <% 
+                # Get the number of rounds for this league
+                total_members = length(@members)
+                rounds_per_league = div(total_members + @num_leagues - 1, @num_leagues)
               %>
-              <%= if is_this_league do %>
-                <div class="card-container h-32">
-                  <div class={["card relative w-full h-full rounded-lg shadow-md cursor-default", if(is_revealed, do: "is-flipped")]} data-card-index={index}>
-                    <div class="card-face flex justify-center items-center rounded-lg p-4 text-center bg-base-300 border-2 border-base-content text-base-content">
-                      <span class="text-lg font-medium px-3 py-1 rounded bg-base-200">Round <%= div(index, @num_leagues) + 1 %></span>
-                    </div>
-                    <div class="card-face card-back flex justify-center items-center rounded-lg p-4 text-center bg-base-100 border-2 border-primary text-primary font-bold text-lg break-words">
-                      <span><%= member_name %></span>
-                    </div>
+              
+              <%= for round <- 1..rounds_per_league do %>
+                <% 
+                  # Calculate the overall index for this round and league
+                  index = (round - 1) * @num_leagues + (league_num - 1)
+                  is_revealed = index < length(@revealed)
+                  member_name = if is_revealed, do: Enum.at(@revealed, index), else: nil
+                %>
+                
+                <li class="font-medium text-lg">
+                  <div class="flex items-center">
+                    <span class="mr-2">Round <%= round %>:</span>
+                    <%= if is_revealed do %>
+                      <div 
+                        data-row-index={index} 
+                        class="transition-all duration-500 bg-base-100 py-1.5 px-3 rounded-md shadow-sm text-primary font-semibold opacity-100"
+                      >
+                        <%= member_name %>
+                      </div>
+                    <% else %>
+                      <div class="py-1.5 px-3 rounded-md border border-dashed border-base-content/30 text-base-content/50 italic">
+                        Not yet revealed
+                      </div>
+                    <% end %>
                   </div>
-                </div>
+                </li>
               <% end %>
-            <% end %>
+            </ol>
           </div>
         <% end %>
       </div>

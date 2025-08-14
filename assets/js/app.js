@@ -26,7 +26,7 @@ import { hooks as colocatedHooks } from "phoenix-colocated/draftr";
 import topbar from "../vendor/topbar";
 import ClipboardHooks from "./hooks/clipboard";
 import AnimationHooks from "./hooks/animation";
-import CardFlipHook from "./hooks/card_flip";
+import RevealHook from "./hooks/reveal";
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
@@ -34,7 +34,7 @@ const csrfToken = document
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: { ...colocatedHooks, ...ClipboardHooks, ...AnimationHooks, CardFlip: CardFlipHook },
+  hooks: { ...colocatedHooks, ...ClipboardHooks, ...AnimationHooks, Reveal: RevealHook },
 });
 
 // Show progress bar on live navigation and form submits
