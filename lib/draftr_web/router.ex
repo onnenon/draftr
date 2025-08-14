@@ -17,7 +17,8 @@ defmodule DraftrWeb.Router do
   scope "/", DraftrWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+  live "/", DraftSetupLive, :new
+  live "/draft/:id", DraftLive, :show
   end
 
   # Other scopes may use custom stacks.

@@ -14,6 +14,7 @@ defmodule Draftr.Application do
        repos: Application.fetch_env!(:draftr, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:draftr, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Draftr.PubSub},
+      Draftr.DraftSession,
       # Start a worker by calling: Draftr.Worker.start_link(arg)
       # {Draftr.Worker, arg},
       # Start to serve requests, typically the last entry
