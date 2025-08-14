@@ -14,12 +14,14 @@ defmodule Draftr.DraftSession do
 
 
   @doc """
-  Creates a new draft session with a unique ID, league name, member list, and number of leagues.
+  Creates a new draft session with a unique ID, draft title, member list, and number of leagues.
   Returns the session ID.
   """
-  def create_session(league_name, members, num_leagues \\ 1) when is_binary(league_name) and is_list(members) and is_integer(num_leagues) do
+  def create_session(draft_title, members, num_leagues \\ 1, league_names \\ nil) when is_binary(draft_title) and is_list(members) and is_integer(num_leagues) do
     session_id = Ecto.UUID.generate()
-    GenServer.call(__MODULE__, {:create_session, session_id, league_name, members, num_leagues})
+    # If league_names are not provided, create default names
+    league_names = league_names || Enum.map(1..num_leagues, fn i -> "League #{i}" end)
+    GenServer.call(__MODULE__, {:create_session, session_id, draft_title, members, num_leagues, league_names})
     session_id
   end
 
@@ -70,14 +72,15 @@ defmodule Draftr.DraftSession do
   end
 
 
-  def handle_call({:create_session, session_id, league_name, members, num_leagues}, _from, state) do
+  def handle_call({:create_session, session_id, draft_title, members, num_leagues, league_names}, _from, state) do
     new_state = Map.put(state, session_id, %{
-      league_name: league_name,
+      draft_title: draft_title,
       members: members,
       remaining: members,
       revealed: [],
       viewers: 0,
       num_leagues: num_leagues,
+      league_names: league_names,
       league_assignments: %{} # Will store member -> league number mappings
     })
     {:reply, :ok, new_state}

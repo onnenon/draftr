@@ -5,7 +5,15 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, league_name: "", members: [""], session_id: nil, link: nil, full_url: nil, num_leagues: 1)}
+    {:ok, assign(socket, 
+      draft_title: "", 
+      members: [""], 
+      session_id: nil, 
+      link: nil, 
+      full_url: nil, 
+      num_leagues: 1,
+      league_names: %{1 => "League 1"}
+    )}
   end
 
   @impl true
@@ -44,7 +52,7 @@ defmodule DraftrWeb.DraftSetupLive do
   end
 
   def handle_event("form_change", params, socket) do
-    league_name = params["league_name"] || ""
+    draft_title = params["draft_title"] || ""
 
     # Get the number of leagues (default to 1)
     num_leagues = case params["num_leagues"] do
@@ -57,6 +65,12 @@ defmodule DraftrWeb.DraftSetupLive do
         end
     end
 
+    # Get all league names
+    league_names = Enum.reduce(1..num_leagues, %{}, fn idx, acc ->
+      name = params["league_name_#{idx}"] || "League #{idx}"
+      Map.put(acc, idx, name)
+    end)
+
     # Get all member inputs
     members = socket.assigns.members
     |> Enum.with_index()
@@ -64,7 +78,7 @@ defmodule DraftrWeb.DraftSetupLive do
       params["member_#{idx}"] || ""
     end)
 
-    {:noreply, assign(socket, league_name: league_name, members: members, num_leagues: num_leagues)}
+    {:noreply, assign(socket, draft_title: draft_title, members: members, num_leagues: num_leagues, league_names: league_names)}
   end
 
   def handle_event("start_draft", params, socket) do
@@ -72,16 +86,17 @@ defmodule DraftrWeb.DraftSetupLive do
     Logger.info("Start draft event triggered with params: #{inspect(params)}")
 
     members = Enum.filter(socket.assigns.members, &(&1 != ""))
-    league_name = String.trim(socket.assigns.league_name)
+    draft_title = String.trim(socket.assigns.draft_title)
     num_leagues = socket.assigns.num_leagues
+    league_names = Map.values(socket.assigns.league_names)
 
-    Logger.info("League name: #{inspect(league_name)}, Members: #{inspect(members)}, Num leagues: #{num_leagues}")
+    Logger.info("Draft title: #{inspect(draft_title)}, Members: #{inspect(members)}, Num leagues: #{num_leagues}, League names: #{inspect(league_names)}")
 
     min_members_per_league = 2
     total_min_members = min_members_per_league * num_leagues
 
-    if league_name != "" and length(members) >= total_min_members do
-      session_id = DraftSession.create_session(league_name, members, num_leagues)
+    if draft_title != "" and length(members) >= total_min_members do
+      session_id = DraftSession.create_session(draft_title, members, num_leagues, league_names)
       Logger.info("Session created with ID: #{inspect(session_id)}")
 
       # Generate the path
@@ -94,12 +109,12 @@ defmodule DraftrWeb.DraftSetupLive do
       {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
       error_msg = cond do
-        league_name == "" -> "Please enter a league name"
+        draft_title == "" -> "Please enter a draft title"
         length(members) < total_min_members -> "Please enter at least #{total_min_members} members (minimum of #{min_members_per_league} per league)"
-        true -> "Please enter a league name and enough members"
+        true -> "Please enter a draft title and enough members"
       end
 
-      Logger.warning("Invalid draft setup: league_name=#{league_name}, members_count=#{length(members)}, num_leagues=#{num_leagues}")
+      Logger.warning("Invalid draft setup: draft_title=#{draft_title}, members_count=#{length(members)}, num_leagues=#{num_leagues}")
       {:noreply, put_flash(socket, :error, error_msg)}
     end
   end
@@ -124,8 +139,8 @@ defmodule DraftrWeb.DraftSetupLive do
       <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-primary">Create a New Draft</h1>
       <form phx-submit="start_draft" phx-change="form_change">
         <div class="mb-4">
-          <label class="block mb-1 font-semibold" for="league_name">League Name</label>
-          <input id="league_name" name="league_name" type="text" value={@league_name} placeholder="Enter league name" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
+          <label class="block mb-1 font-semibold" for="draft_title">Draft Title</label>
+          <input id="draft_title" name="draft_title" type="text" value={@draft_title} placeholder="Enter draft title" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
         </div>
         <div class="mb-4">
           <label class="block mb-1 font-semibold" for="num_leagues">Number of Leagues</label>
@@ -139,6 +154,21 @@ defmodule DraftrWeb.DraftSetupLive do
             class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content"
           />
           <p class="text-sm text-base-content/70 mt-1">Minimum of 2 members per league required</p>
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold">League Names</label>
+          <%= for league_idx <- 1..@num_leagues do %>
+            <div class="mb-2 flex items-center">
+              <span class="mr-2 font-semibold w-6 text-right"><%= league_idx %>.</span>
+              <input 
+                type="text" 
+                name={"league_name_#{league_idx}"} 
+                value={Map.get(@league_names, league_idx, "League #{league_idx}")} 
+                placeholder={"League #{league_idx} name"} 
+                class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" 
+              />
+            </div>
+          <% end %>
         </div>
         <label class="block mb-1 font-semibold">Members</label>
         <div id="members-list" phx-hook="AnimatedList" class="members-list">

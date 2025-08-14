@@ -16,12 +16,13 @@ defmodule DraftrWeb.DraftLive do
     if session do
       {:ok, assign(socket,
         session_id: session_id,
-        league_name: session.league_name,
+        draft_title: session.draft_title,
         members: session.members,
         revealed: session.revealed,
         remaining: session.members -- session.revealed,
         viewers: session.viewers || 0,
         num_leagues: session.num_leagues,
+        league_names: session.league_names || Enum.map(1..session.num_leagues, fn i -> "League #{i}" end),
         league_assignments: session.league_assignments || %{}
       )}
     else
@@ -68,7 +69,7 @@ defmodule DraftrWeb.DraftLive do
     ~H"""
     <div class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-base-200 text-base-content">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-base-300">
-        <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0"><%= @league_name %> Draft</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0"><%= @draft_title %></h1>
         <div class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -104,9 +105,8 @@ defmodule DraftrWeb.DraftLive do
       <div id="draft-container" phx-hook="Reveal" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <%= for league_num <- 1..@num_leagues do %>
           <div class="bg-base-300 rounded-lg p-4 shadow-md">
-            <h3 class="text-xl font-semibold text-primary mb-4 pb-2 border-b border-base-content/20 flex items-center">
-              <span class="inline-block w-3 h-3 bg-primary rounded-full mr-2"></span>
-              League <%= league_num %>
+            <h3 class="text-3xl font-bold text-secondary mb-4 pb-2 border-b border-base-content/20">
+              <%= Enum.at(@league_names, league_num - 1, "League #{league_num}") %>
             </h3>
 
             <ol class="space-y-3 pl-2">
