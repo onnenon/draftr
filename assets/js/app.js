@@ -27,6 +27,8 @@ import topbar from "../vendor/topbar";
 import ClipboardHooks from "./hooks/clipboard";
 import AnimationHooks from "./hooks/animation";
 import RevealHook from "./hooks/reveal";
+import CardFlipHook from "./hooks/card_flip";
+import DraftCreatorHooks from "./hooks/draft_creator";
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
@@ -38,7 +40,9 @@ const liveSocket = new LiveSocket("/live", Socket, {
     ...colocatedHooks,
     ...ClipboardHooks,
     ...AnimationHooks,
+    ...DraftCreatorHooks,
     Reveal: RevealHook,
+    CardFlip: CardFlipHook
   },
 });
 

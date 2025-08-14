@@ -16,6 +16,7 @@ defmodule DraftrWeb.DraftLive do
     if session do
       {:ok, assign(socket,
         session_id: session_id,
+        is_creator: false,  # Default to false, will be updated by JS hook
         draft_title: session.draft_title,
         members: session.members,
         revealed: session.revealed,
@@ -32,14 +33,50 @@ defmodule DraftrWeb.DraftLive do
 
   @impl true
   def handle_event("next_pick", _params, socket) do
-    revealed = DraftSession.reveal_next_pick(socket.assigns.session_id)
-    # Calculate the index of the newly revealed member
-    new_reveal_index = length(revealed) - 1
+    # Debug info
+    require Logger
+    Logger.info("Next pick event fired. Is creator: #{inspect(socket.assigns.is_creator)}")
+    
+    if socket.assigns.is_creator do
+      Logger.info("User is creator, proceeding with reveal")
+      case DraftSession.reveal_next_pick(socket.assigns.session_id) do
+        nil -> 
+          Logger.error("Reveal returned nil!")
+          {:noreply, socket}
+          
+        revealed -> 
+          # Calculate the index of the newly revealed member
+          new_reveal_index = length(revealed) - 1
+          
+          Logger.info("Revealed index: #{new_reveal_index}, total revealed: #{length(revealed)}")
 
-    # Trigger the reveal animation for the newly revealed member
-    socket = push_event(socket, "reveal_pick", %{index: new_reveal_index})
+          # Trigger the reveal animation for the newly revealed member
+          socket = push_event(socket, "reveal_pick", %{index: new_reveal_index})
 
-    {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
+          {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
+      end
+    else
+      # Not the creator, don't allow revealing
+      Logger.info("User is not creator, blocking reveal")
+      socket = put_flash(socket, :error, "Only the draft creator can reveal picks")
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("set_is_creator", %{"is_creator" => is_creator}, socket) do
+    # Handle the event from JS to set the creator status
+    require Logger
+    
+    # Convert string "true" to boolean true
+    is_creator_bool = case is_creator do
+      true -> true
+      "true" -> true
+      _ -> false
+    end
+    
+    Logger.info("Setting is_creator to: #{inspect(is_creator)} (converted to: #{inspect(is_creator_bool)})")
+    {:noreply, assign(socket, is_creator: is_creator_bool)}
   end
 
   @impl true
@@ -67,7 +104,7 @@ defmodule DraftrWeb.DraftLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
+    <div id="draft-view" phx-hook="DraftViewer" data-session-id={@session_id} class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-base-300">
         <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0"><%= @draft_title %></h1>
         <div class="flex items-center bg-base-100/90 px-3.5 py-2.5 rounded-lg shadow-sm">
@@ -149,9 +186,19 @@ defmodule DraftrWeb.DraftLive do
 
       <div class="flex justify-center mt-6">
         <%= if length(@revealed) < length(@members) do %>
-          <button phx-click="next_pick" class="mt-4 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-lg shadow-md font-semibold text-lg hover:translate-y-[-2px] hover:shadow-lg transition-all duration-300">
-            Reveal Next Pick
-          </button>
+          <div data-creator-only>
+            <button phx-click="next_pick" class="mt-4 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-lg shadow-md font-semibold text-lg hover:translate-y-[-2px] hover:shadow-lg transition-all duration-300">
+              Reveal Next Pick
+            </button>
+          </div>
+          <div data-viewer-only style="display: none;">
+            <div class="mt-4 px-6 py-3.5 bg-base-300 text-base-content rounded-lg shadow-md font-semibold text-lg flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Waiting for draft creator to reveal picks
+            </div>
+          </div>
         <% else %>
           <div class="mt-4 px-6 py-4 bg-gradient-to-r from-success to-success/80 text-success-content rounded-lg shadow-md font-semibold text-lg flex items-center justify-center min-h-[60px]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

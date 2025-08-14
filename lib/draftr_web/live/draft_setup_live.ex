@@ -133,6 +133,9 @@ defmodule DraftrWeb.DraftSetupLive do
       url = DraftrWeb.Endpoint.url()
       full_url = "#{url}#{path}"
 
+      # Store in local storage that this user is the creator
+      socket = push_event(socket, "store-draft-creator", %{session_id: session_id})
+      
       {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
       error_msg = cond do
@@ -181,7 +184,7 @@ defmodule DraftrWeb.DraftSetupLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
+    <div id="draft-creator-container" phx-hook="DraftCreator" class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
       <div class="mb-6 pb-4 border-b border-base-300">
         <h1 class="text-2xl sm:text-3xl font-bold text-primary">Create a New Draft</h1>
       </div>

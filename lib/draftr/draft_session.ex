@@ -96,7 +96,12 @@ defmodule Draftr.DraftSession do
       nil -> {:reply, nil, state}
       %{remaining: [], revealed: revealed} = _session ->
         {:reply, revealed, state}
-      %{remaining: remaining, revealed: revealed, num_leagues: num_leagues, league_assignments: league_assignments} = session ->
+      %{
+        remaining: remaining,
+        revealed: revealed,
+        num_leagues: num_leagues,
+        league_assignments: league_assignments
+      } = session ->
         [next | _rest] = Enum.shuffle(remaining)
         new_revealed = revealed ++ [next]
 
