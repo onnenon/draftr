@@ -96,23 +96,23 @@ defmodule Draftr.DraftSession do
       %{remaining: remaining, revealed: revealed, num_leagues: num_leagues, league_assignments: league_assignments} = session ->
         [next | _rest] = Enum.shuffle(remaining)
         new_revealed = revealed ++ [next]
-        
+
         # Determine which league should get the next member in a simple round-robin order
         # Based on the length of current revealed picks
         current_pick_index = length(revealed)
         # Calculate the league number (1-based) using modulo arithmetic
         league_num = rem(current_pick_index, num_leagues) + 1
-        
+
         # Update league assignments
         new_league_assignments = Map.put(league_assignments, next, league_num)
-        
+
         new_session = %{
-          session | 
-          remaining: List.delete(remaining, next), 
+          session |
+          remaining: List.delete(remaining, next),
           revealed: new_revealed,
           league_assignments: new_league_assignments
         }
-        
+
         new_state = Map.put(state, session_id, new_session)
 
         # Broadcast the updated draft to all subscribers

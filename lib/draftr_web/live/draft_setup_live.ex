@@ -45,12 +45,12 @@ defmodule DraftrWeb.DraftSetupLive do
 
   def handle_event("form_change", params, socket) do
     league_name = params["league_name"] || ""
-    
+
     # Get the number of leagues (default to 1)
     num_leagues = case params["num_leagues"] do
       nil -> 1
       "" -> 1
-      val -> 
+      val ->
         case Integer.parse(val) do
           {num, _} when num > 0 -> num
           _ -> 1
@@ -98,7 +98,7 @@ defmodule DraftrWeb.DraftSetupLive do
         length(members) < total_min_members -> "Please enter at least #{total_min_members} members (minimum of #{min_members_per_league} per league)"
         true -> "Please enter a league name and enough members"
       end
-      
+
       Logger.warning("Invalid draft setup: league_name=#{league_name}, members_count=#{length(members)}, num_leagues=#{num_leagues}")
       {:noreply, put_flash(socket, :error, error_msg)}
     end
@@ -129,14 +129,14 @@ defmodule DraftrWeb.DraftSetupLive do
         </div>
         <div class="mb-4">
           <label class="block mb-1 font-semibold" for="num_leagues">Number of Leagues</label>
-          <input 
-            id="num_leagues" 
-            name="num_leagues" 
-            type="number" 
-            min="1" 
-            value={@num_leagues} 
-            placeholder="Number of leagues" 
-            class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" 
+          <input
+            id="num_leagues"
+            name="num_leagues"
+            type="number"
+            min="1"
+            value={@num_leagues}
+            placeholder="Number of leagues"
+            class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content"
           />
           <p class="text-sm text-base-content/70 mt-1">Minimum of 2 members per league required</p>
         </div>

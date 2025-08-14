@@ -32,6 +32,12 @@ defmodule DraftrWeb.DraftLive do
   @impl true
   def handle_event("next_pick", _params, socket) do
     revealed = DraftSession.reveal_next_pick(socket.assigns.session_id)
+    # Calculate the index of the newly revealed member
+    new_reveal_index = length(revealed) - 1
+
+    # Trigger the card flip animation for the newly revealed member
+    socket = push_event(socket, "reveal_card", %{index: new_reveal_index})
+
     {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
   end
 
@@ -60,59 +66,92 @@ defmodule DraftrWeb.DraftLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-4 sm:p-6 rounded shadow bg-base-200 text-base-content">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl sm:text-3xl font-bold text-primary"><%= @league_name %> Draft</h1>
-        <div class="flex items-center bg-base-100 px-2 py-1 rounded">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 text-primary" viewBox="0 0 20 20" fill="currentColor">
+    <div class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-base-200 text-base-content">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-base-300">
+        <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0"><%= @league_name %> Draft</h1>
+        <div class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
           </svg>
-          <span class="text-sm font-medium"><%= @viewers %> <%= if @viewers == 1, do: "viewer", else: "viewers" %></span>
+          <span class="font-medium"><%= @viewers %> <%= if @viewers == 1, do: "viewer", else: "viewers" %></span>
         </div>
       </div>
-      <h2 class="text-lg mb-2 font-semibold">Members:</h2>
-      <ul class="mb-4 flex flex-wrap gap-2">
-        <%= for member <- @members do %>
-          <li class="py-1 px-2 rounded bg-base-100 border border-base-300"><%= member %></li>
-        <% end %>
-      </ul>
-      <h2 class="text-xl mb-2 font-semibold text-success">Draft Order:</h2>
-      <ol class="list-decimal ml-6 mb-4">
-        <%= for member <- @revealed do %>
-          <li class="py-1 text-lg font-medium">
-            <%= member %>
-            <%= if Map.has_key?(@league_assignments, member) do %>
-              <span class="ml-2 px-2 py-0.5 bg-info text-info-content rounded-full text-sm">
-                League <%= @league_assignments[member] %>
-              </span>
-            <% end %>
-          </li>
-        <% end %>
-      </ol>
-      <%= if length(@revealed) < length(@members) do %>
-        <button phx-click="next_pick" class="px-4 py-2 bg-primary text-primary-content rounded">Next</button>
-      <% else %>
-        <div class="mt-4 p-2 bg-success text-success-content rounded font-semibold">Draft complete!</div>
-        
-        <%= if @num_leagues > 1 do %>
-          <div class="mt-4">
-            <h2 class="text-xl mb-2 font-semibold text-success">League Assignments:</h2>
-            <%= for league_num <- 1..@num_leagues do %>
-              <div class="mb-4">
-                <h3 class="text-lg font-semibold">League <%= league_num %></h3>
-                <ul class="list-disc ml-6">
-                  <%= for {member, league} <- @league_assignments do %>
-                    <%= if league == league_num do %>
-                      <li class="py-1"><%= member %></li>
-                    <% end %>
-                  <% end %>
-                </ul>
-              </div>
+
+      <div class="mb-6 p-4 bg-base-300 rounded-lg shadow-inner">
+        <h2 class="text-lg mb-3 font-semibold">League Members (<%= length(@members) %> total):</h2>
+        <ul class="flex flex-wrap gap-2">
+          <%= for member <- @members do %>
+            <li class="py-1.5 px-3 rounded-full bg-base-100 border border-base-300 shadow-sm">
+              <%= member %>
+              <%= if Map.has_key?(@league_assignments, member) do %>
+                <span class="ml-1 text-xs text-primary font-semibold">
+                  (League <%= @league_assignments[member] %>)
+                </span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <div class="mb-4 p-4 bg-base-300 rounded-lg shadow-inner">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold">Draft Progress:</h2>
+          <div class="text-sm font-medium">
+            <%= length(@revealed) %> of <%= length(@members) %> picks revealed
+          </div>
+        </div>
+        <div class="w-full bg-base-100 rounded-full h-2.5 mt-2">
+          <div class="bg-primary h-2.5 rounded-full" style={"width: #{if length(@members) > 0, do: length(@revealed) / length(@members) * 100, else: 0}%"}></div>
+        </div>
+      </div>
+
+      <div id="draft-container" phx-hook="CardFlip" class="pb-4">
+        <%= for league_num <- 1..@num_leagues do %>
+          <h3 class="mt-8 mb-4 text-xl font-semibold text-primary pb-2 border-b-2 border-base-300 flex items-center">
+            <span class="inline-block w-3 h-3 bg-primary rounded-full mr-2"></span>
+            League <%= league_num %>
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mb-6">
+            <%= for index <- 0..(length(@members) - 1) do %>
+              <%
+                # Calculate if this card should be in this league
+                card_league = rem(index, @num_leagues) + 1
+                is_revealed = index < length(@revealed)
+                member_name = if is_revealed, do: Enum.at(@revealed, index), else: nil
+                is_this_league = card_league == league_num
+              %>
+              <%= if is_this_league do %>
+                <div class="card-container h-32">
+                  <div class={["card relative w-full h-full rounded-lg shadow-md cursor-default", if(is_revealed, do: "is-flipped")]} data-card-index={index}>
+                    <div class="card-face flex justify-center items-center rounded-lg p-4 text-center bg-base-300 border-2 border-base-content text-base-content">
+                      <span class="text-lg font-medium px-3 py-1 rounded bg-base-200">Round <%= div(index, @num_leagues) + 1 %></span>
+                    </div>
+                    <div class="card-face card-back flex justify-center items-center rounded-lg p-4 text-center bg-base-100 border-2 border-primary text-primary font-bold text-lg break-words">
+                      <span><%= member_name %></span>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
             <% end %>
           </div>
         <% end %>
-      <% end %>
+      </div>
+
+      <div class="flex justify-center mt-6">
+        <%= if length(@revealed) < length(@members) do %>
+          <button phx-click="next_pick" class="mt-4 px-6 py-3 bg-primary text-primary-content rounded-lg shadow-md font-semibold text-lg hover:translate-y-[-2px] hover:shadow-lg transition-all duration-300">
+            Reveal Next Pick
+          </button>
+        <% else %>
+          <div class="mt-4 px-6 py-4 bg-success text-success-content rounded-lg shadow-md font-semibold text-lg flex items-center justify-center min-h-[60px]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Draft complete! All picks have been revealed.
+          </div>
+        <% end %>
+      </div>
     </div>
     """
   end
