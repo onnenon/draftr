@@ -5,7 +5,7 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, league_name: "", members: [""], session_id: nil, link: nil, full_url: nil)}
+    {:ok, assign(socket, league_name: "", members: [""], session_id: nil, link: nil, full_url: nil, num_leagues: 1)}
   end
 
   @impl true
@@ -45,6 +45,17 @@ defmodule DraftrWeb.DraftSetupLive do
 
   def handle_event("form_change", params, socket) do
     league_name = params["league_name"] || ""
+    
+    # Get the number of leagues (default to 1)
+    num_leagues = case params["num_leagues"] do
+      nil -> 1
+      "" -> 1
+      val -> 
+        case Integer.parse(val) do
+          {num, _} when num > 0 -> num
+          _ -> 1
+        end
+    end
 
     # Get all member inputs
     members = socket.assigns.members
@@ -53,7 +64,7 @@ defmodule DraftrWeb.DraftSetupLive do
       params["member_#{idx}"] || ""
     end)
 
-    {:noreply, assign(socket, league_name: league_name, members: members)}
+    {:noreply, assign(socket, league_name: league_name, members: members, num_leagues: num_leagues)}
   end
 
   def handle_event("start_draft", params, socket) do
@@ -62,11 +73,15 @@ defmodule DraftrWeb.DraftSetupLive do
 
     members = Enum.filter(socket.assigns.members, &(&1 != ""))
     league_name = String.trim(socket.assigns.league_name)
+    num_leagues = socket.assigns.num_leagues
 
-    Logger.info("League name: #{inspect(league_name)}, Members: #{inspect(members)}")
+    Logger.info("League name: #{inspect(league_name)}, Members: #{inspect(members)}, Num leagues: #{num_leagues}")
 
-    if league_name != "" and length(members) > 1 do
-      session_id = DraftSession.create_session(league_name, members)
+    min_members_per_league = 2
+    total_min_members = min_members_per_league * num_leagues
+
+    if league_name != "" and length(members) >= total_min_members do
+      session_id = DraftSession.create_session(league_name, members, num_leagues)
       Logger.info("Session created with ID: #{inspect(session_id)}")
 
       # Generate the path
@@ -78,8 +93,14 @@ defmodule DraftrWeb.DraftSetupLive do
 
       {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
-      Logger.warning("Invalid draft setup: league_name=#{league_name}, members_count=#{length(members)}")
-      {:noreply, put_flash(socket, :error, "Please enter a league name and at least 2 members")}
+      error_msg = cond do
+        league_name == "" -> "Please enter a league name"
+        length(members) < total_min_members -> "Please enter at least #{total_min_members} members (minimum of #{min_members_per_league} per league)"
+        true -> "Please enter a league name and enough members"
+      end
+      
+      Logger.warning("Invalid draft setup: league_name=#{league_name}, members_count=#{length(members)}, num_leagues=#{num_leagues}")
+      {:noreply, put_flash(socket, :error, error_msg)}
     end
   end
 
@@ -105,6 +126,19 @@ defmodule DraftrWeb.DraftSetupLive do
         <div class="mb-4">
           <label class="block mb-1 font-semibold" for="league_name">League Name</label>
           <input id="league_name" name="league_name" type="text" value={@league_name} placeholder="Enter league name" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
+        </div>
+        <div class="mb-4">
+          <label class="block mb-1 font-semibold" for="num_leagues">Number of Leagues</label>
+          <input 
+            id="num_leagues" 
+            name="num_leagues" 
+            type="number" 
+            min="1" 
+            value={@num_leagues} 
+            placeholder="Number of leagues" 
+            class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" 
+          />
+          <p class="text-sm text-base-content/70 mt-1">Minimum of 2 members per league required</p>
         </div>
         <label class="block mb-1 font-semibold">Members</label>
         <div id="members-list" phx-hook="AnimatedList" class="members-list">

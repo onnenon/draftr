@@ -20,7 +20,9 @@ defmodule DraftrWeb.DraftLive do
         members: session.members,
         revealed: session.revealed,
         remaining: session.members -- session.revealed,
-        viewers: session.viewers || 0
+        viewers: session.viewers || 0,
+        num_leagues: session.num_leagues,
+        league_assignments: session.league_assignments || %{}
       )}
     else
       {:ok, redirect(socket, to: "/")}
@@ -37,7 +39,8 @@ defmodule DraftrWeb.DraftLive do
   def handle_info({:draft_updated, session}, socket) do
     {:noreply, assign(socket,
       revealed: session.revealed,
-      remaining: session.remaining
+      remaining: session.remaining,
+      league_assignments: session.league_assignments
     )}
   end
 
@@ -77,13 +80,38 @@ defmodule DraftrWeb.DraftLive do
       <h2 class="text-xl mb-2 font-semibold text-success">Draft Order:</h2>
       <ol class="list-decimal ml-6 mb-4">
         <%= for member <- @revealed do %>
-          <li class="py-1 text-lg font-medium"><%= member %></li>
+          <li class="py-1 text-lg font-medium">
+            <%= member %>
+            <%= if Map.has_key?(@league_assignments, member) do %>
+              <span class="ml-2 px-2 py-0.5 bg-info text-info-content rounded-full text-sm">
+                League <%= @league_assignments[member] %>
+              </span>
+            <% end %>
+          </li>
         <% end %>
       </ol>
       <%= if length(@revealed) < length(@members) do %>
         <button phx-click="next_pick" class="px-4 py-2 bg-primary text-primary-content rounded">Next</button>
       <% else %>
         <div class="mt-4 p-2 bg-success text-success-content rounded font-semibold">Draft complete!</div>
+        
+        <%= if @num_leagues > 1 do %>
+          <div class="mt-4">
+            <h2 class="text-xl mb-2 font-semibold text-success">League Assignments:</h2>
+            <%= for league_num <- 1..@num_leagues do %>
+              <div class="mb-4">
+                <h3 class="text-lg font-semibold">League <%= league_num %></h3>
+                <ul class="list-disc ml-6">
+                  <%= for {member, league} <- @league_assignments do %>
+                    <%= if league == league_num do %>
+                      <li class="py-1"><%= member %></li>
+                    <% end %>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     </div>
     """

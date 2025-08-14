@@ -14,12 +14,12 @@ defmodule Draftr.DraftSession do
 
 
   @doc """
-  Creates a new draft session with a unique ID, league name, and member list.
+  Creates a new draft session with a unique ID, league name, member list, and number of leagues.
   Returns the session ID.
   """
-  def create_session(league_name, members) when is_binary(league_name) and is_list(members) do
+  def create_session(league_name, members, num_leagues \\ 1) when is_binary(league_name) and is_list(members) and is_integer(num_leagues) do
     session_id = Ecto.UUID.generate()
-    GenServer.call(__MODULE__, {:create_session, session_id, league_name, members})
+    GenServer.call(__MODULE__, {:create_session, session_id, league_name, members, num_leagues})
     session_id
   end
 
@@ -70,13 +70,15 @@ defmodule Draftr.DraftSession do
   end
 
 
-  def handle_call({:create_session, session_id, league_name, members}, _from, state) do
+  def handle_call({:create_session, session_id, league_name, members, num_leagues}, _from, state) do
     new_state = Map.put(state, session_id, %{
       league_name: league_name,
       members: members,
       remaining: members,
       revealed: [],
-      viewers: 0
+      viewers: 0,
+      num_leagues: num_leagues,
+      league_assignments: %{} # Will store member -> league number mappings
     })
     {:reply, :ok, new_state}
   end
@@ -91,10 +93,32 @@ defmodule Draftr.DraftSession do
       nil -> {:reply, nil, state}
       %{remaining: [], revealed: revealed} = _session ->
         {:reply, revealed, state}
-      %{remaining: remaining, revealed: revealed} = session ->
+      %{remaining: remaining, revealed: revealed, num_leagues: num_leagues, league_assignments: league_assignments} = session ->
         [next | _rest] = Enum.shuffle(remaining)
         new_revealed = revealed ++ [next]
-        new_session = %{session | remaining: List.delete(remaining, next), revealed: new_revealed}
+        
+        # Assign this member to a league in round-robin order
+        current_league_counts = Enum.reduce(league_assignments, %{}, fn {_member, league_num}, counts ->
+          Map.update(counts, league_num, 1, &(&1 + 1))
+        end)
+        
+        # Determine which league should get the next member
+        league_num = Enum.reduce(1..num_leagues, {1, 0}, fn league, {min_league, min_count} ->
+          count = Map.get(current_league_counts, league, 0)
+          if count < min_count or min_count == 0, do: {league, count}, else: {min_league, min_count}
+        end)
+        |> elem(0)
+        
+        # Update league assignments
+        new_league_assignments = Map.put(league_assignments, next, league_num)
+        
+        new_session = %{
+          session | 
+          remaining: List.delete(remaining, next), 
+          revealed: new_revealed,
+          league_assignments: new_league_assignments
+        }
+        
         new_state = Map.put(state, session_id, new_session)
 
         # Broadcast the updated draft to all subscribers
