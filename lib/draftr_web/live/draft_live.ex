@@ -67,10 +67,10 @@ defmodule DraftrWeb.DraftLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-base-200 text-base-content">
+    <div class="w-full max-w-5xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
       <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 pb-4 border-b border-base-300">
         <h1 class="text-2xl sm:text-3xl font-bold text-primary mb-2 sm:mb-0"><%= @draft_title %></h1>
-        <div class="flex items-center bg-base-100 px-3 py-2 rounded-lg shadow-sm">
+        <div class="flex items-center bg-base-100/90 px-3.5 py-2.5 rounded-lg shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
             <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
@@ -79,33 +79,33 @@ defmodule DraftrWeb.DraftLive do
         </div>
       </div>
 
-      <div class="mb-6 p-4 bg-base-300 rounded-lg shadow-inner">
+      <div class="mb-6 p-4 bg-base-300/50 rounded-lg shadow-inner">
         <h2 class="text-lg mb-3 font-semibold">League Members (<%= length(@members) %> total):</h2>
         <ul class="flex flex-wrap gap-2">
           <%= for member <- @members do %>
-            <li class={"py-1.5 px-3 rounded-full #{if Map.has_key?(@league_assignments, member), do: "bg-success text-success-content", else: "bg-base-100 border border-base-300"} shadow-sm"}>
+            <li class={"py-1.5 px-3 rounded-full #{if Map.has_key?(@league_assignments, member), do: "bg-gradient-to-r from-success to-success-focus text-success-content", else: "bg-base-100 border border-base-300"} shadow-sm"}>
               <%= member %>
             </li>
           <% end %>
         </ul>
       </div>
 
-      <div class="mb-4 p-4 bg-base-300 rounded-lg shadow-inner">
+      <div class="mb-5 p-4 bg-base-300/50 rounded-lg shadow-inner">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold">Draft Progress:</h2>
           <div class="text-sm font-medium">
             <%= length(@revealed) %> of <%= length(@members) %> picks revealed
           </div>
         </div>
-        <div class="w-full bg-base-100 rounded-full h-2.5 mt-2">
-          <div class="bg-primary h-2.5 rounded-full" style={"width: #{if length(@members) > 0, do: length(@revealed) / length(@members) * 100, else: 0}%"}></div>
+        <div class="w-full bg-base-100 rounded-full h-3 mt-3 shadow-inner overflow-hidden">
+          <div class="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500" style={"width: #{if length(@members) > 0, do: length(@revealed) / length(@members) * 100, else: 0}%"}></div>
         </div>
       </div>
 
       <div id="draft-container" phx-hook="Reveal" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <%= for league_num <- 1..@num_leagues do %>
-          <div class="bg-base-300 rounded-lg p-4 shadow-md">
-            <h3 class="text-3xl font-bold text-secondary mb-4 pb-2 border-b border-base-content/20">
+          <div class="bg-gradient-to-br from-base-300 to-base-300/70 rounded-lg p-5 shadow-md">
+            <h3 class="text-3xl font-bold text-primary mb-4 pb-3 border-b border-base-content/20">
               <%= Enum.at(@league_names, league_num - 1, "League #{league_num}") %>
             </h3>
 
@@ -130,12 +130,12 @@ defmodule DraftrWeb.DraftLive do
                     <%= if is_revealed do %>
                       <div
                         data-row-index={index}
-                        class="transition-all duration-500 bg-base-100 py-1.5 px-3 rounded-md shadow-sm text-primary font-semibold opacity-100 flex-1"
+                        class="transition-all duration-500 bg-base-100 py-2 px-4 rounded-md shadow-sm text-primary font-semibold opacity-100 flex-1 border-l-4 border-primary"
                       >
                         <%= member_name %>
                       </div>
                     <% else %>
-                      <div class="py-1.5 px-3 rounded-md border border-dashed border-base-content/30 text-base-content/50 italic flex-1">
+                      <div class="py-2 px-4 rounded-md border border-dashed border-base-content/30 text-base-content/50 italic flex-1">
                         Empty
                       </div>
                     <% end %>
@@ -149,11 +149,11 @@ defmodule DraftrWeb.DraftLive do
 
       <div class="flex justify-center mt-6">
         <%= if length(@revealed) < length(@members) do %>
-          <button phx-click="next_pick" class="mt-4 px-6 py-3 bg-primary text-primary-content rounded-lg shadow-md font-semibold text-lg hover:translate-y-[-2px] hover:shadow-lg transition-all duration-300">
+          <button phx-click="next_pick" class="mt-4 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-lg shadow-md font-semibold text-lg hover:translate-y-[-2px] hover:shadow-lg transition-all duration-300">
             Reveal Next Pick
           </button>
         <% else %>
-          <div class="mt-4 px-6 py-4 bg-success text-success-content rounded-lg shadow-md font-semibold text-lg flex items-center justify-center min-h-[60px]">
+          <div class="mt-4 px-6 py-4 bg-gradient-to-r from-success to-success/80 text-success-content rounded-lg shadow-md font-semibold text-lg flex items-center justify-center min-h-[60px]">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>

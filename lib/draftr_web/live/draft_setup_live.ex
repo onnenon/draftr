@@ -181,15 +181,17 @@ defmodule DraftrWeb.DraftSetupLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-4 sm:p-6 rounded shadow bg-base-200 text-base-content">
-      <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-primary">Create a New Draft</h1>
+    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
+      <div class="mb-6 pb-4 border-b border-base-300">
+        <h1 class="text-2xl sm:text-3xl font-bold text-primary">Create a New Draft</h1>
+      </div>
       <form phx-submit="start_draft" phx-change="form_change">
-        <div class="mb-4">
-          <label class="block mb-1 font-semibold" for="draft_title">Draft Title</label>
-          <input id="draft_title" name="draft_title" type="text" value={@draft_title} placeholder="Enter draft title" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
+        <div class="mb-5">
+          <label class="block mb-2 font-semibold" for="draft_title">Draft Title</label>
+          <input id="draft_title" name="draft_title" type="text" value={@draft_title} placeholder="Enter draft title" class="w-full px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200" />
         </div>
-        <div class="mb-4">
-          <h2 class="block mb-2 font-semibold text-lg">Leagues</h2>
+        <div class="mb-5 p-4 bg-base-300/50 rounded-lg shadow-inner">
+          <h2 class="block mb-3 font-semibold text-lg">Leagues</h2>
           <div id="leagues-list" phx-hook="AnimatedList" class="leagues-list">
             <%= for league_idx <- 1..@num_leagues do %>
               <div data-league-item class="mb-2 flex items-center transition-height">
@@ -198,65 +200,65 @@ defmodule DraftrWeb.DraftSetupLive do
                   name={"league_name_#{league_idx}"}
                   value={Map.get(@league_names, league_idx, "League #{league_idx}")}
                   placeholder="League name"
-                  class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content"
+                  class="flex-1 px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
                 />
-                <button type="button" phx-click="remove_league" phx-value-index={league_idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove league">
+                <button type="button" phx-click="remove_league" phx-value-index={league_idx} class="ml-2 p-1.5 rounded-md hover:bg-base-100 transition-colors" aria-label="Remove league">
                   <.icon name="hero-x-mark" class="size-5 text-error" />
                 </button>
               </div>
             <% end %>
           </div>
-          <div class="mt-2">
-            <button type="button" phx-click="add_league" class="px-4 py-2 bg-secondary text-secondary-content rounded flex items-center">
+          <div class="mt-3">
+            <button type="button" phx-click="add_league" class="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-sm flex items-center hover:shadow-md transition-all duration-200">
               <.icon name="hero-plus" class="size-4 mr-1" /> Add League
             </button>
           </div>
-          <p class="text-sm text-base-content/70 mt-1">Minimum of 2 members per league required</p>
+          <p class="text-sm text-base-content/70 mt-2">Minimum of 2 members per league required</p>
         </div>
 
-        <div class="mb-4">
-          <h2 class="block mb-2 font-semibold text-lg">Members</h2>
+        <div class="mb-5 p-4 bg-base-300/50 rounded-lg shadow-inner">
+          <h2 class="block mb-3 font-semibold text-lg">Members</h2>
           <div id="members-list" phx-hook="AnimatedList" class="members-list">
             <%= for {member, idx} <- Enum.with_index(@members) do %>
               <div data-member-item class="mb-2 flex items-center transition-height">
-                <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
-                <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove member">
+                <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200" />
+                <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1.5 rounded-md hover:bg-base-100 transition-colors" aria-label="Remove member">
                   <.icon name="hero-x-mark" class="size-5 text-error" />
                 </button>
               </div>
             <% end %>
           </div>
-          <div class="mt-2">
-            <button type="button" phx-click="add_member" class="px-4 py-2 bg-secondary text-secondary-content rounded flex items-center">
+          <div class="mt-3">
+            <button type="button" phx-click="add_member" class="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-sm flex items-center hover:shadow-md transition-all duration-200">
               <.icon name="hero-plus" class="size-4 mr-1" /> Add Member
             </button>
           </div>
         </div>
 
         <div class="mt-6 flex justify-center">
-          <button type="submit" class="w-full px-4 py-3 bg-primary text-primary-content rounded font-semibold text-center">Generate Draft</button>
+          <button type="submit" class="w-full px-4 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-md font-semibold text-center text-lg hover:shadow-lg hover:translate-y-[-2px] transition-all duration-300">Generate Draft</button>
         </div>
         <%= if flash = Phoenix.Flash.get(@flash, :info) do %>
-          <div class="mt-4 p-2 bg-info text-info-content rounded animate-fade-in">
+          <div class="mt-4 p-3 bg-gradient-to-r from-info to-info/80 text-info-content rounded-md shadow-sm animate-fade-in">
             <%= flash %>
           </div>
         <% end %>
         <%= if flash = Phoenix.Flash.get(@flash, :error) do %>
-          <div class="mt-4 p-2 bg-error text-error-content rounded">
+          <div class="mt-4 p-3 bg-gradient-to-r from-error to-error/80 text-error-content rounded-md shadow-sm">
             <%= flash %>
           </div>
         <% end %>
       </form>
       <%= if @link do %>
-        <div class="mt-6 p-4 bg-success text-success-content rounded">
-          <p class="mb-2 font-semibold">Share this link with your league members:</p>
-          <div class="flex flex-col sm:flex-row mb-2">
-            <p id="draft-link" class="bg-base-100 p-2 rounded-t sm:rounded-t-none sm:rounded-l border border-base-300 text-base-content font-mono text-sm break-all flex-1"><%= @full_url %></p>
+        <div class="mt-6 p-5 bg-gradient-to-r from-success to-success/80 text-success-content rounded-md shadow-md">
+          <p class="mb-3 font-semibold">Share this link with your league members:</p>
+          <div class="flex flex-col sm:flex-row mb-3">
+            <p id="draft-link" class="bg-base-100 p-3 rounded-t sm:rounded-t-none sm:rounded-l-md border border-base-300 text-base-content font-mono text-sm break-all flex-1 shadow-inner"><%= @full_url %></p>
             <button
               id="copy-button"
               phx-hook="CopyToClipboard"
               data-copy-target="draft-link"
-              class="p-2 bg-base-100 rounded-b sm:rounded-b-none sm:rounded-r border border-t-0 sm:border-t sm:border-l-0 border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
+              class="p-3 bg-base-100 rounded-b sm:rounded-b-none sm:rounded-r-md border border-t-0 sm:border-t sm:border-l-0 border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
               aria-label="Copy link"
             >
               <span class="flex items-center justify-center">
@@ -265,8 +267,8 @@ defmodule DraftrWeb.DraftSetupLive do
               </span>
             </button>
           </div>
-          <div class="mt-3">
-            <a href={@link} class="px-4 py-2 bg-info text-info-content rounded inline-block">Go to Draft</a>
+          <div class="mt-4">
+            <a href={@link} class="px-5 py-2.5 bg-gradient-to-r from-info to-info/80 text-info-content rounded-md shadow-sm inline-block hover:shadow-md transition-all duration-200">Go to Draft</a>
           </div>
         </div>
       <% end %>
