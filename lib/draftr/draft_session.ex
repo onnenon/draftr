@@ -97,17 +97,11 @@ defmodule Draftr.DraftSession do
         [next | _rest] = Enum.shuffle(remaining)
         new_revealed = revealed ++ [next]
         
-        # Assign this member to a league in round-robin order
-        current_league_counts = Enum.reduce(league_assignments, %{}, fn {_member, league_num}, counts ->
-          Map.update(counts, league_num, 1, &(&1 + 1))
-        end)
-        
-        # Determine which league should get the next member
-        league_num = Enum.reduce(1..num_leagues, {1, 0}, fn league, {min_league, min_count} ->
-          count = Map.get(current_league_counts, league, 0)
-          if count < min_count or min_count == 0, do: {league, count}, else: {min_league, min_count}
-        end)
-        |> elem(0)
+        # Determine which league should get the next member in a simple round-robin order
+        # Based on the length of current revealed picks
+        current_pick_index = length(revealed)
+        # Calculate the league number (1-based) using modulo arithmetic
+        league_num = rem(current_pick_index, num_leagues) + 1
         
         # Update league assignments
         new_league_assignments = Map.put(league_assignments, next, league_num)
