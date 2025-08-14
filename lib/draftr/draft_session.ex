@@ -47,6 +47,22 @@ defmodule Draftr.DraftSession do
     GenServer.cast(__MODULE__, {:delete_session, session_id})
   end
 
+  @doc """
+  Increments the viewer count for a session.
+  Returns the updated viewer count.
+  """
+  def increment_viewers(session_id) do
+    GenServer.call(__MODULE__, {:increment_viewers, session_id})
+  end
+
+  @doc """
+  Decrements the viewer count for a session.
+  Returns the updated viewer count.
+  """
+  def decrement_viewers(session_id) do
+    GenServer.call(__MODULE__, {:decrement_viewers, session_id})
+  end
+
   # GenServer Callbacks
 
   def init(state) do
@@ -59,7 +75,8 @@ defmodule Draftr.DraftSession do
       league_name: league_name,
       members: members,
       remaining: members,
-      revealed: []
+      revealed: [],
+      viewers: 0
     })
     {:reply, :ok, new_state}
   end
@@ -88,6 +105,46 @@ defmodule Draftr.DraftSession do
         )
 
         {:reply, new_revealed, new_state}
+    end
+  end
+
+  def handle_call({:increment_viewers, session_id}, _from, state) do
+    case Map.get(state, session_id) do
+      nil ->
+        {:reply, 0, state}
+      session ->
+        new_count = (session.viewers || 0) + 1
+        new_session = Map.put(session, :viewers, new_count)
+        new_state = Map.put(state, session_id, new_session)
+
+        # Broadcast the updated viewer count
+        Phoenix.PubSub.broadcast(
+          Draftr.PubSub,
+          "draft:#{session_id}",
+          {:viewers_updated, new_count}
+        )
+
+        {:reply, new_count, new_state}
+    end
+  end
+
+  def handle_call({:decrement_viewers, session_id}, _from, state) do
+    case Map.get(state, session_id) do
+      nil ->
+        {:reply, 0, state}
+      session ->
+        new_count = max(0, (session.viewers || 0) - 1)
+        new_session = Map.put(session, :viewers, new_count)
+        new_state = Map.put(state, session_id, new_session)
+
+        # Broadcast the updated viewer count
+        Phoenix.PubSub.broadcast(
+          Draftr.PubSub,
+          "draft:#{session_id}",
+          {:viewers_updated, new_count}
+        )
+
+        {:reply, new_count, new_state}
     end
   end
 
