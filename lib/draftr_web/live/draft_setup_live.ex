@@ -5,12 +5,12 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, 
-      draft_title: "", 
-      members: [""], 
-      session_id: nil, 
-      link: nil, 
-      full_url: nil, 
+    {:ok, assign(socket,
+      draft_title: "",
+      members: [""],
+      session_id: nil,
+      link: nil,
+      full_url: nil,
       num_leagues: 1,
       league_names: %{1 => "League 1"}
     )}
@@ -41,6 +41,23 @@ defmodule DraftrWeb.DraftSetupLive do
     end
   end
 
+  @impl true
+  def handle_event("add_league", _params, socket) do
+    # Increment the number of leagues
+    num_leagues = socket.assigns.num_leagues + 1
+
+    # Add the new league with default name
+    league_names = Map.put(socket.assigns.league_names, num_leagues, "League #{num_leagues}")
+
+    # First update the state
+    socket = assign(socket, num_leagues: num_leagues, league_names: league_names)
+
+    # Send event to trigger animation
+    socket = push_event(socket, "item_added", %{target: "leagues-list", index: num_leagues - 1})
+
+    {:noreply, socket}
+  end
+
   def handle_event("remove_member", %{"index" => index}, socket) do
     index = String.to_integer(index)
     # First send animation event before removing the item
@@ -51,19 +68,29 @@ defmodule DraftrWeb.DraftSetupLive do
     {:noreply, socket}
   end
 
+  def handle_event("remove_league", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+
+    # Don't allow removing the last league
+    if socket.assigns.num_leagues <= 1 do
+      socket = put_flash(socket, :info, "At least one league is required")
+      Process.send_after(self(), :clear_flash, 3000)
+      {:noreply, socket}
+    else
+      # Send animation event before removing the item
+      socket = push_event(socket, "item_removed", %{target: "leagues-list", index: index - 1})
+
+      # Then remove the league after a delay to allow animation to play
+      Process.send_after(self(), {:remove_league, index}, 300)
+      {:noreply, socket}
+    end
+  end
+
   def handle_event("form_change", params, socket) do
     draft_title = params["draft_title"] || ""
 
-    # Get the number of leagues (default to 1)
-    num_leagues = case params["num_leagues"] do
-      nil -> 1
-      "" -> 1
-      val ->
-        case Integer.parse(val) do
-          {num, _} when num > 0 -> num
-          _ -> 1
-        end
-    end
+    # Get the current number of leagues
+    num_leagues = socket.assigns.num_leagues
 
     # Get all league names
     league_names = Enum.reduce(1..num_leagues, %{}, fn idx, acc ->
@@ -78,7 +105,7 @@ defmodule DraftrWeb.DraftSetupLive do
       params["member_#{idx}"] || ""
     end)
 
-    {:noreply, assign(socket, draft_title: draft_title, members: members, num_leagues: num_leagues, league_names: league_names)}
+    {:noreply, assign(socket, draft_title: draft_title, members: members, league_names: league_names)}
   end
 
   def handle_event("start_draft", params, socket) do
@@ -128,6 +155,25 @@ defmodule DraftrWeb.DraftSetupLive do
   end
 
   @impl true
+  def handle_info({:remove_league, index}, socket) do
+    # Decrease the number of leagues
+    num_leagues = socket.assigns.num_leagues - 1
+
+    # Remove the league from league_names and renumber remaining leagues
+    league_names = socket.assigns.league_names
+                  |> Map.delete(index)
+                  |> Enum.reduce(%{}, fn {k, v}, acc ->
+                      cond do
+                        k < index -> Map.put(acc, k, v)
+                        k > index -> Map.put(acc, k-1, v)
+                        true -> acc
+                      end
+                    end)
+
+    {:noreply, assign(socket, num_leagues: num_leagues, league_names: league_names)}
+  end
+
+  @impl true
   def handle_info(:clear_flash, socket) do
     {:noreply, clear_flash(socket, :info)}
   end
@@ -143,47 +189,52 @@ defmodule DraftrWeb.DraftSetupLive do
           <input id="draft_title" name="draft_title" type="text" value={@draft_title} placeholder="Enter draft title" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
         </div>
         <div class="mb-4">
-          <label class="block mb-1 font-semibold" for="num_leagues">Number of Leagues</label>
-          <input
-            id="num_leagues"
-            name="num_leagues"
-            type="number"
-            min="1"
-            value={@num_leagues}
-            placeholder="Number of leagues"
-            class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content"
-          />
+          <h2 class="block mb-2 font-semibold text-lg">Leagues</h2>
+          <div id="leagues-list" phx-hook="AnimatedList" class="leagues-list">
+            <%= for league_idx <- 1..@num_leagues do %>
+              <div data-league-item class="mb-2 flex items-center transition-height">
+                <input
+                  type="text"
+                  name={"league_name_#{league_idx}"}
+                  value={Map.get(@league_names, league_idx, "League #{league_idx}")}
+                  placeholder="League name"
+                  class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content"
+                />
+                <button type="button" phx-click="remove_league" phx-value-index={league_idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove league">
+                  <.icon name="hero-x-mark" class="size-5 text-error" />
+                </button>
+              </div>
+            <% end %>
+          </div>
+          <div class="mt-2">
+            <button type="button" phx-click="add_league" class="px-4 py-2 bg-secondary text-secondary-content rounded flex items-center">
+              <.icon name="hero-plus" class="size-4 mr-1" /> Add League
+            </button>
+          </div>
           <p class="text-sm text-base-content/70 mt-1">Minimum of 2 members per league required</p>
         </div>
+
         <div class="mb-4">
-          <label class="block mb-1 font-semibold">League Names</label>
-          <%= for league_idx <- 1..@num_leagues do %>
-            <div class="mb-2 flex items-center">
-              <span class="mr-2 font-semibold w-6 text-right"><%= league_idx %>.</span>
-              <input 
-                type="text" 
-                name={"league_name_#{league_idx}"} 
-                value={Map.get(@league_names, league_idx, "League #{league_idx}")} 
-                placeholder={"League #{league_idx} name"} 
-                class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" 
-              />
-            </div>
-          <% end %>
+          <h2 class="block mb-2 font-semibold text-lg">Members</h2>
+          <div id="members-list" phx-hook="AnimatedList" class="members-list">
+            <%= for {member, idx} <- Enum.with_index(@members) do %>
+              <div data-member-item class="mb-2 flex items-center transition-height">
+                <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
+                <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove member">
+                  <.icon name="hero-x-mark" class="size-5 text-error" />
+                </button>
+              </div>
+            <% end %>
+          </div>
+          <div class="mt-2">
+            <button type="button" phx-click="add_member" class="px-4 py-2 bg-secondary text-secondary-content rounded flex items-center">
+              <.icon name="hero-plus" class="size-4 mr-1" /> Add Member
+            </button>
+          </div>
         </div>
-        <label class="block mb-1 font-semibold">Members</label>
-        <div id="members-list" phx-hook="AnimatedList" class="members-list">
-          <%= for {member, idx} <- Enum.with_index(@members) do %>
-            <div data-member-item class="mb-2 flex items-center transition-height">
-              <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
-              <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove member">
-                <.icon name="hero-x-mark" class="size-5 text-error" />
-              </button>
-            </div>
-          <% end %>
-        </div>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <button type="button" phx-click="add_member" class="px-4 py-2 bg-secondary text-secondary-content rounded whitespace-nowrap">Add Member</button>
-          <button type="submit" class="px-4 py-2 bg-primary text-primary-content rounded whitespace-nowrap">Generate Draft</button>
+
+        <div class="mt-6 flex justify-center">
+          <button type="submit" class="w-full px-4 py-3 bg-primary text-primary-content rounded font-semibold text-center">Generate Draft</button>
         </div>
         <%= if flash = Phoenix.Flash.get(@flash, :info) do %>
           <div class="mt-4 p-2 bg-info text-info-content rounded animate-fade-in">

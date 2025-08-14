@@ -2,8 +2,16 @@
 const AnimationHooks = {
   AnimatedList: {
     mounted() {
-      this.handleEvent("item_added", ({ index }) => {
-        const items = this.el.querySelectorAll("[data-member-item]");
+      this.handleEvent("item_added", ({ index, target }) => {
+        const targetList =
+          target ||
+          (this.el.id === "leagues-list" ? "leagues-list" : "members-list");
+        const selector =
+          targetList === "leagues-list"
+            ? "[data-league-item]"
+            : "[data-member-item]";
+        const items = this.el.querySelectorAll(selector);
+
         if (items[index]) {
           const item = items[index];
           item.classList.add("animate-fade-in");
@@ -13,16 +21,32 @@ const AnimationHooks = {
         }
       });
 
-      this.handleEvent("item_removed", ({ index }) => {
-        const items = this.el.querySelectorAll("[data-member-item]");
+      this.handleEvent("item_removed", ({ index, target }) => {
+        const targetList =
+          target ||
+          (this.el.id === "leagues-list" ? "leagues-list" : "members-list");
+        const selector =
+          targetList === "leagues-list"
+            ? "[data-league-item]"
+            : "[data-member-item]";
+        const items = this.el.querySelectorAll(selector);
+
         if (index < items.length) {
           const item = items[index];
           item.classList.add("animate-fade-out");
         }
       });
 
-      this.handleEvent("highlight_empty", () => {
-        const items = this.el.querySelectorAll("[data-member-item]");
+      this.handleEvent("highlight_empty", ({ target }) => {
+        const targetList =
+          target ||
+          (this.el.id === "leagues-list" ? "leagues-list" : "members-list");
+        const selector =
+          targetList === "leagues-list"
+            ? "[data-league-item]"
+            : "[data-member-item]";
+        const items = this.el.querySelectorAll(selector);
+
         items.forEach((item) => {
           const input = item.querySelector("input");
           if (input && input.value === "") {
