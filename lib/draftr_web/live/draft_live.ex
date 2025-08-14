@@ -36,18 +36,18 @@ defmodule DraftrWeb.DraftLive do
     # Debug info
     require Logger
     Logger.info("Next pick event fired. Is creator: #{inspect(socket.assigns.is_creator)}")
-    
+
     if socket.assigns.is_creator do
       Logger.info("User is creator, proceeding with reveal")
       case DraftSession.reveal_next_pick(socket.assigns.session_id) do
-        nil -> 
+        nil ->
           Logger.error("Reveal returned nil!")
           {:noreply, socket}
-          
-        revealed -> 
+
+        revealed ->
           # Calculate the index of the newly revealed member
           new_reveal_index = length(revealed) - 1
-          
+
           Logger.info("Revealed index: #{new_reveal_index}, total revealed: #{length(revealed)}")
 
           # Trigger the reveal animation for the newly revealed member
@@ -67,14 +67,14 @@ defmodule DraftrWeb.DraftLive do
   def handle_event("set_is_creator", %{"is_creator" => is_creator}, socket) do
     # Handle the event from JS to set the creator status
     require Logger
-    
+
     # Convert string "true" to boolean true
     is_creator_bool = case is_creator do
       true -> true
       "true" -> true
       _ -> false
     end
-    
+
     Logger.info("Setting is_creator to: #{inspect(is_creator)} (converted to: #{inspect(is_creator_bool)})")
     {:noreply, assign(socket, is_creator: is_creator_bool)}
   end

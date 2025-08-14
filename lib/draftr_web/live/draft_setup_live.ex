@@ -135,7 +135,7 @@ defmodule DraftrWeb.DraftSetupLive do
 
       # Store in local storage that this user is the creator
       socket = push_event(socket, "store-draft-creator", %{session_id: session_id})
-      
+
       {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
       error_msg = cond do

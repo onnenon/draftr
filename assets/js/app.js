@@ -42,7 +42,7 @@ const liveSocket = new LiveSocket("/live", Socket, {
     ...AnimationHooks,
     ...DraftCreatorHooks,
     Reveal: RevealHook,
-    CardFlip: CardFlipHook
+    CardFlip: CardFlipHook,
   },
 });
 
