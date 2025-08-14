@@ -41,8 +41,8 @@ defmodule DraftrWeb.DraftLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-xl mx-auto mt-10 p-6 rounded shadow bg-base-200 text-base-content">
-      <h1 class="text-3xl font-bold mb-4 text-primary"><%= @league_name %> Draft</h1>
+    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-4 sm:p-6 rounded shadow bg-base-200 text-base-content">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-primary"><%= @league_name %> Draft</h1>
       <h2 class="text-lg mb-2 font-semibold">Members:</h2>
       <ul class="mb-4 flex flex-wrap gap-2">
         <%= for member <- @members do %>

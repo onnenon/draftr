@@ -56,8 +56,8 @@ defmodule DraftrWeb.DraftSetupLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-xl mx-auto mt-10 p-6 rounded shadow bg-base-200 text-base-content">
-      <h1 class="text-3xl font-bold mb-4 text-primary">Create a New Draft</h1>
+    <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-4 sm:p-6 rounded shadow bg-base-200 text-base-content">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-4 text-primary">Create a New Draft</h1>
       <form phx-submit="start_draft" phx-change="form_change">
         <div class="mb-4">
           <label class="block mb-1 font-semibold" for="league_name">League Name</label>
@@ -69,9 +69,9 @@ defmodule DraftrWeb.DraftSetupLive do
             <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content focus:outline-primary" />
           </div>
         <% end %>
-        <div class="mt-2 flex items-center">
-          <button type="button" phx-click="add_member" class="px-3 py-1 bg-secondary text-secondary-content rounded">Add Member</button>
-          <button type="submit" class="ml-2 px-4 py-2 bg-primary text-primary-content rounded">Generate Draft</button>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" phx-click="add_member" class="px-4 py-2 bg-secondary text-secondary-content rounded whitespace-nowrap">Add Member</button>
+          <button type="submit" class="px-4 py-2 bg-primary text-primary-content rounded whitespace-nowrap">Generate Draft</button>
         </div>
         <%= if flash = Phoenix.Flash.get(@flash, :error) do %>
           <div class="mt-4 p-2 bg-error text-error-content rounded">
@@ -82,18 +82,18 @@ defmodule DraftrWeb.DraftSetupLive do
       <%= if @link do %>
         <div class="mt-6 p-4 bg-success text-success-content rounded">
           <p class="mb-2 font-semibold">Share this link with your league members:</p>
-          <div class="flex items-center mb-2">
-            <p id="draft-link" class="bg-base-100 p-2 rounded-l border-l border-t border-b border-base-300 text-base-content font-mono text-sm break-all flex-1"><%= @full_url %></p>
+          <div class="flex flex-col sm:flex-row mb-2">
+            <p id="draft-link" class="bg-base-100 p-2 rounded-t sm:rounded-t-none sm:rounded-l border border-base-300 text-base-content font-mono text-sm break-all flex-1"><%= @full_url %></p>
             <button
               id="copy-button"
               phx-hook="CopyToClipboard"
               data-copy-target="draft-link"
-              class="p-2 bg-base-100 rounded-r border-t border-r border-b border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
+              class="p-2 bg-base-100 rounded-b sm:rounded-b-none sm:rounded-r border border-t-0 sm:border-t sm:border-l-0 border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
               aria-label="Copy link"
             >
-              <span class="flex items-center">
+              <span class="flex items-center justify-center">
                 <.icon name="hero-document-duplicate" class="size-5 text-primary" />
-                <span data-feedback class="ml-1 text-xs hidden sm:inline">Copy</span>
+                <span data-feedback class="ml-1 text-xs">Copy</span>
               </span>
             </button>
           </div>
