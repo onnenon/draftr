@@ -34,10 +34,10 @@ defmodule DraftrWeb.DraftLive do
     revealed = DraftSession.reveal_next_pick(socket.assigns.session_id)
     # Calculate the index of the newly revealed member
     new_reveal_index = length(revealed) - 1
-    
+
     # Trigger the reveal animation for the newly revealed member
     socket = push_event(socket, "reveal_pick", %{index: new_reveal_index})
-    
+
     {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
   end
 
@@ -82,13 +82,8 @@ defmodule DraftrWeb.DraftLive do
         <h2 class="text-lg mb-3 font-semibold">League Members (<%= length(@members) %> total):</h2>
         <ul class="flex flex-wrap gap-2">
           <%= for member <- @members do %>
-            <li class="py-1.5 px-3 rounded-full bg-base-100 border border-base-300 shadow-sm">
+            <li class={"py-1.5 px-3 rounded-full #{if Map.has_key?(@league_assignments, member), do: "bg-success text-success-content", else: "bg-base-100 border border-base-300"} shadow-sm"}>
               <%= member %>
-              <%= if Map.has_key?(@league_assignments, member) do %>
-                <span class="ml-1 text-xs text-primary font-semibold">
-                  (League <%= @league_assignments[member] %>)
-                </span>
-              <% end %>
             </li>
           <% end %>
         </ul>
@@ -113,35 +108,35 @@ defmodule DraftrWeb.DraftLive do
               <span class="inline-block w-3 h-3 bg-primary rounded-full mr-2"></span>
               League <%= league_num %>
             </h3>
-            
-            <ol class="list-decimal list-inside space-y-3 pl-2">
-              <% 
+
+            <ol class="space-y-3 pl-2">
+              <%
                 # Get the number of rounds for this league
                 total_members = length(@members)
                 rounds_per_league = div(total_members + @num_leagues - 1, @num_leagues)
               %>
-              
+
               <%= for round <- 1..rounds_per_league do %>
-                <% 
+                <%
                   # Calculate the overall index for this round and league
                   index = (round - 1) * @num_leagues + (league_num - 1)
                   is_revealed = index < length(@revealed)
                   member_name = if is_revealed, do: Enum.at(@revealed, index), else: nil
                 %>
-                
+
                 <li class="font-medium text-lg">
                   <div class="flex items-center">
-                    <span class="mr-2">Round <%= round %>:</span>
+                    <span class="mr-2 font-semibold w-6 text-right"><%= round %>.</span>
                     <%= if is_revealed do %>
-                      <div 
-                        data-row-index={index} 
-                        class="transition-all duration-500 bg-base-100 py-1.5 px-3 rounded-md shadow-sm text-primary font-semibold opacity-100"
+                      <div
+                        data-row-index={index}
+                        class="transition-all duration-500 bg-base-100 py-1.5 px-3 rounded-md shadow-sm text-primary font-semibold opacity-100 flex-1"
                       >
                         <%= member_name %>
                       </div>
                     <% else %>
-                      <div class="py-1.5 px-3 rounded-md border border-dashed border-base-content/30 text-base-content/50 italic">
-                        Not yet revealed
+                      <div class="py-1.5 px-3 rounded-md border border-dashed border-base-content/30 text-base-content/50 italic flex-1">
+                        Empty
                       </div>
                     <% end %>
                   </div>

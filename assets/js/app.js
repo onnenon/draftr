@@ -34,7 +34,12 @@ const csrfToken = document
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: { ...colocatedHooks, ...ClipboardHooks, ...AnimationHooks, Reveal: RevealHook },
+  hooks: {
+    ...colocatedHooks,
+    ...ClipboardHooks,
+    ...AnimationHooks,
+    Reveal: RevealHook,
+  },
 });
 
 // Show progress bar on live navigation and form submits
