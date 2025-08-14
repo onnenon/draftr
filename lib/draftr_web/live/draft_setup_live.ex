@@ -10,7 +10,37 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def handle_event("add_member", _params, socket) do
-    {:noreply, update(socket, :members, fn members -> members ++ [""] end)}
+    # Check if there's already an empty member field
+    has_empty_field = Enum.any?(socket.assigns.members, fn member -> member == "" end)
+
+    if has_empty_field do
+      # If there's already an empty field, don't add another one
+      # Instead, flash a message to use the existing empty field
+      socket = put_flash(socket, :info, "Please use the existing empty field before adding a new one")
+      # Auto-dismiss the flash message after 3 seconds
+      Process.send_after(self(), :clear_flash, 3000)
+      # Trigger animation to highlight empty fields
+      socket = push_event(socket, "highlight_empty", %{})
+      {:noreply, socket}
+    else
+      # Add a new member field
+      updated_members = socket.assigns.members ++ [""]
+      index = length(updated_members) - 1
+      socket = assign(socket, members: updated_members)
+      # Send event to trigger animation
+      socket = push_event(socket, "item_added", %{index: index})
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("remove_member", %{"index" => index}, socket) do
+    index = String.to_integer(index)
+    # First send animation event before removing the item
+    socket = push_event(socket, "item_removed", %{index: index})
+
+    # Then remove the item after a delay to allow animation to play
+    Process.send_after(self(), {:remove_member, index}, 300)
+    {:noreply, socket}
   end
 
   def handle_event("form_change", params, socket) do
@@ -54,6 +84,19 @@ defmodule DraftrWeb.DraftSetupLive do
   end
 
   @impl true
+  def handle_info({:remove_member, index}, socket) do
+    updated_members = List.delete_at(socket.assigns.members, index)
+    # Ensure we always have at least one input field
+    updated_members = if updated_members == [], do: [""], else: updated_members
+    {:noreply, assign(socket, members: updated_members)}
+  end
+
+  @impl true
+  def handle_info(:clear_flash, socket) do
+    {:noreply, clear_flash(socket, :info)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-4 sm:p-6 rounded shadow bg-base-200 text-base-content">
@@ -61,18 +104,28 @@ defmodule DraftrWeb.DraftSetupLive do
       <form phx-submit="start_draft" phx-change="form_change">
         <div class="mb-4">
           <label class="block mb-1 font-semibold" for="league_name">League Name</label>
-          <input id="league_name" name="league_name" type="text" value={@league_name} placeholder="Enter league name" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content focus:outline-primary" />
+          <input id="league_name" name="league_name" type="text" value={@league_name} placeholder="Enter league name" class="w-full px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
         </div>
         <label class="block mb-1 font-semibold">Members</label>
-        <%= for {member, idx} <- Enum.with_index(@members) do %>
-          <div class="mb-2 flex">
-            <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content focus:outline-primary" />
-          </div>
-        <% end %>
+        <div id="members-list" phx-hook="AnimatedList" class="members-list">
+          <%= for {member, idx} <- Enum.with_index(@members) do %>
+            <div data-member-item class="mb-2 flex items-center transition-height">
+              <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-2 py-2 border border-base-300 rounded bg-base-100 text-base-content" />
+              <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1 rounded hover:bg-base-300 transition-colors" aria-label="Remove member">
+                <.icon name="hero-x-mark" class="size-5 text-error" />
+              </button>
+            </div>
+          <% end %>
+        </div>
         <div class="mt-2 flex flex-wrap gap-2">
           <button type="button" phx-click="add_member" class="px-4 py-2 bg-secondary text-secondary-content rounded whitespace-nowrap">Add Member</button>
           <button type="submit" class="px-4 py-2 bg-primary text-primary-content rounded whitespace-nowrap">Generate Draft</button>
         </div>
+        <%= if flash = Phoenix.Flash.get(@flash, :info) do %>
+          <div class="mt-4 p-2 bg-info text-info-content rounded animate-fade-in">
+            <%= flash %>
+          </div>
+        <% end %>
         <%= if flash = Phoenix.Flash.get(@flash, :error) do %>
           <div class="mt-4 p-2 bg-error text-error-content rounded">
             <%= flash %>
