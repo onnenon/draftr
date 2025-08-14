@@ -7,10 +7,6 @@
     'Noto Color Emoji';
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
-    --color-green-100: oklch(96.2% 0.044 156.743);
-    --color-blue-600: oklch(54.6% 0.245 262.881);
-    --color-blue-700: oklch(48.8% 0.243 264.376);
-    --color-gray-200: oklch(92.8% 0.006 264.531);
     --color-gray-300: oklch(87.2% 0.01 258.338);
     --color-black: #000;
     --color-white: #fff;
@@ -23,8 +19,6 @@
     --text-lg--line-height: calc(1.75 / 1.125);
     --text-xl: 1.25rem;
     --text-xl--line-height: calc(1.75 / 1.25);
-    --text-2xl: 1.5rem;
-    --text-2xl--line-height: calc(2 / 1.5);
     --text-3xl: 1.875rem;
     --text-3xl--line-height: calc(2.25 / 1.875);
     --text-4xl: 2.25rem;
@@ -1187,6 +1181,9 @@
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
   }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
   .mt-4 {
     margin-top: calc(var(--spacing) * 4);
   }
@@ -1451,6 +1448,9 @@
   .hidden {
     display: none;
   }
+  .inline-block {
+    display: inline-block;
+  }
   .inline-flex {
     display: inline-flex;
   }
@@ -1711,14 +1711,11 @@
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
     }
   }
-  .bg-blue-600 {
-    background-color: var(--color-blue-600);
+  .bg-error {
+    background-color: var(--color-error);
   }
-  .bg-gray-200 {
-    background-color: var(--color-gray-200);
-  }
-  .bg-green-100 {
-    background-color: var(--color-green-100);
+  .bg-info {
+    background-color: var(--color-info);
   }
   .bg-primary {
     background-color: var(--color-primary);
@@ -1822,10 +1819,6 @@
   .pb-6 {
     padding-bottom: calc(var(--spacing) * 6);
   }
-  .text-2xl {
-    font-size: var(--text-2xl);
-    line-height: var(--tw-leading, var(--text-2xl--line-height));
-  }
   .text-3xl {
     font-size: var(--text-3xl);
     line-height: var(--tw-leading, var(--text-3xl--line-height));
@@ -1911,17 +1904,20 @@
       color: color-mix(in oklab, var(--color-base-content) 80%, transparent);
     }
   }
-  .text-blue-700 {
-    color: var(--color-blue-700);
-  }
   .text-error {
     color: var(--color-error);
+  }
+  .text-error-content {
+    color: var(--color-error-content);
   }
   .text-gray-300 {
     color: var(--color-gray-300);
   }
   .text-info {
     color: var(--color-info);
+  }
+  .text-info-content {
+    color: var(--color-info-content);
   }
   .text-primary {
     color: var(--color-primary);
