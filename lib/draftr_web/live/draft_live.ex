@@ -13,19 +13,23 @@ defmodule DraftrWeb.DraftLive do
     end
 
     session = DraftSession.get_session(session_id)
+
     if session do
-      {:ok, assign(socket,
-        session_id: session_id,
-        is_creator: false,  # Default to false, will be updated by JS hook
-        draft_title: session.draft_title,
-        members: session.members,
-        revealed: session.revealed,
-        remaining: session.members -- session.revealed,
-        viewers: session.viewers || 0,
-        num_leagues: session.num_leagues,
-        league_names: session.league_names || Enum.map(1..session.num_leagues, fn i -> "League #{i}" end),
-        league_assignments: session.league_assignments || %{}
-      )}
+      {:ok,
+       assign(socket,
+         session_id: session_id,
+         # Default to false, will be updated by JS hook
+         is_creator: false,
+         draft_title: session.draft_title,
+         members: session.members,
+         revealed: session.revealed,
+         remaining: session.members -- session.revealed,
+         viewers: session.viewers || 0,
+         num_leagues: session.num_leagues,
+         league_names:
+           session.league_names || Enum.map(1..session.num_leagues, fn i -> "League #{i}" end),
+         league_assignments: session.league_assignments || %{}
+       )}
     else
       {:ok, redirect(socket, to: "/")}
     end
@@ -39,6 +43,7 @@ defmodule DraftrWeb.DraftLive do
 
     if socket.assigns.is_creator do
       Logger.info("User is creator, proceeding with reveal")
+
       case DraftSession.reveal_next_pick(socket.assigns.session_id) do
         nil ->
           Logger.error("Reveal returned nil!")
@@ -53,7 +58,8 @@ defmodule DraftrWeb.DraftLive do
           # Trigger the reveal animation for the newly revealed member
           socket = push_event(socket, "reveal_pick", %{index: new_reveal_index})
 
-          {:noreply, assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
+          {:noreply,
+           assign(socket, revealed: revealed, remaining: socket.assigns.members -- revealed)}
       end
     else
       # Not the creator, don't allow revealing
@@ -69,23 +75,28 @@ defmodule DraftrWeb.DraftLive do
     require Logger
 
     # Convert string "true" to boolean true
-    is_creator_bool = case is_creator do
-      true -> true
-      "true" -> true
-      _ -> false
-    end
+    is_creator_bool =
+      case is_creator do
+        true -> true
+        "true" -> true
+        _ -> false
+      end
 
-    Logger.info("Setting is_creator to: #{inspect(is_creator)} (converted to: #{inspect(is_creator_bool)})")
+    Logger.info(
+      "Setting is_creator to: #{inspect(is_creator)} (converted to: #{inspect(is_creator_bool)})"
+    )
+
     {:noreply, assign(socket, is_creator: is_creator_bool)}
   end
 
   @impl true
   def handle_info({:draft_updated, session}, socket) do
-    {:noreply, assign(socket,
-      revealed: session.revealed,
-      remaining: session.remaining,
-      league_assignments: session.league_assignments
-    )}
+    {:noreply,
+     assign(socket,
+       revealed: session.revealed,
+       remaining: session.remaining,
+       league_assignments: session.league_assignments
+     )}
   end
 
   @impl true
@@ -98,6 +109,7 @@ defmodule DraftrWeb.DraftLive do
     if socket.assigns[:session_id] do
       DraftSession.decrement_viewers(socket.assigns.session_id)
     end
+
     :ok
   end
 

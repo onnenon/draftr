@@ -5,15 +5,16 @@ defmodule DraftrWeb.DraftSetupLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket,
-      draft_title: "",
-      members: [""],
-      session_id: nil,
-      link: nil,
-      full_url: nil,
-      num_leagues: 1,
-      league_names: %{1 => "League 1"}
-    )}
+    {:ok,
+     assign(socket,
+       draft_title: "",
+       members: [""],
+       session_id: nil,
+       link: nil,
+       full_url: nil,
+       num_leagues: 1,
+       league_names: %{1 => "League 1"}
+     )}
   end
 
   @impl true
@@ -24,7 +25,9 @@ defmodule DraftrWeb.DraftSetupLive do
     if has_empty_field do
       # If there's already an empty field, don't add another one
       # Instead, flash a message to use the existing empty field
-      socket = put_flash(socket, :info, "Please use the existing empty field before adding a new one")
+      socket =
+        put_flash(socket, :info, "Please use the existing empty field before adding a new one")
+
       # Auto-dismiss the flash message after 3 seconds
       Process.send_after(self(), :clear_flash, 3000)
       # Trigger animation to highlight empty fields
@@ -93,19 +96,22 @@ defmodule DraftrWeb.DraftSetupLive do
     num_leagues = socket.assigns.num_leagues
 
     # Get all league names
-    league_names = Enum.reduce(1..num_leagues, %{}, fn idx, acc ->
-      name = params["league_name_#{idx}"] || "League #{idx}"
-      Map.put(acc, idx, name)
-    end)
+    league_names =
+      Enum.reduce(1..num_leagues, %{}, fn idx, acc ->
+        name = params["league_name_#{idx}"] || "League #{idx}"
+        Map.put(acc, idx, name)
+      end)
 
     # Get all member inputs
-    members = socket.assigns.members
-    |> Enum.with_index()
-    |> Enum.map(fn {_member, idx} ->
-      params["member_#{idx}"] || ""
-    end)
+    members =
+      socket.assigns.members
+      |> Enum.with_index()
+      |> Enum.map(fn {_member, idx} ->
+        params["member_#{idx}"] || ""
+      end)
 
-    {:noreply, assign(socket, draft_title: draft_title, members: members, league_names: league_names)}
+    {:noreply,
+     assign(socket, draft_title: draft_title, members: members, league_names: league_names)}
   end
 
   def handle_event("start_draft", params, socket) do
@@ -117,7 +123,9 @@ defmodule DraftrWeb.DraftSetupLive do
     num_leagues = socket.assigns.num_leagues
     league_names = Map.values(socket.assigns.league_names)
 
-    Logger.info("Draft title: #{inspect(draft_title)}, Members: #{inspect(members)}, Num leagues: #{num_leagues}, League names: #{inspect(league_names)}")
+    Logger.info(
+      "Draft title: #{inspect(draft_title)}, Members: #{inspect(members)}, Num leagues: #{num_leagues}, League names: #{inspect(league_names)}"
+    )
 
     min_members_per_league = 2
     total_min_members = min_members_per_league * num_leagues
@@ -138,13 +146,22 @@ defmodule DraftrWeb.DraftSetupLive do
 
       {:noreply, assign(socket, session_id: session_id, link: path, full_url: full_url)}
     else
-      error_msg = cond do
-        draft_title == "" -> "Please enter a draft title"
-        length(members) < total_min_members -> "Please enter at least #{total_min_members} members (minimum of #{min_members_per_league} per league)"
-        true -> "Please enter a draft title and enough members"
-      end
+      error_msg =
+        cond do
+          draft_title == "" ->
+            "Please enter a draft title"
 
-      Logger.warning("Invalid draft setup: draft_title=#{draft_title}, members_count=#{length(members)}, num_leagues=#{num_leagues}")
+          length(members) < total_min_members ->
+            "Please enter at least #{total_min_members} members (minimum of #{min_members_per_league} per league)"
+
+          true ->
+            "Please enter a draft title and enough members"
+        end
+
+      Logger.warning(
+        "Invalid draft setup: draft_title=#{draft_title}, members_count=#{length(members)}, num_leagues=#{num_leagues}"
+      )
+
       {:noreply, put_flash(socket, :error, error_msg)}
     end
   end
@@ -163,15 +180,16 @@ defmodule DraftrWeb.DraftSetupLive do
     num_leagues = socket.assigns.num_leagues - 1
 
     # Remove the league from league_names and renumber remaining leagues
-    league_names = socket.assigns.league_names
-                  |> Map.delete(index)
-                  |> Enum.reduce(%{}, fn {k, v}, acc ->
-                      cond do
-                        k < index -> Map.put(acc, k, v)
-                        k > index -> Map.put(acc, k-1, v)
-                        true -> acc
-                      end
-                    end)
+    league_names =
+      socket.assigns.league_names
+      |> Map.delete(index)
+      |> Enum.reduce(%{}, fn {k, v}, acc ->
+        cond do
+          k < index -> Map.put(acc, k, v)
+          k > index -> Map.put(acc, k - 1, v)
+          true -> acc
+        end
+      end)
 
     {:noreply, assign(socket, num_leagues: num_leagues, league_names: league_names)}
   end

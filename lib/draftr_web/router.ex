@@ -2,23 +2,23 @@ defmodule DraftrWeb.Router do
   use DraftrWeb, :router
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {DraftrWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, html: {DraftrWeb.Layouts, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
   scope "/", DraftrWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
-  live "/", DraftSetupLive, :new
-  live "/draft/:id", DraftLive, :show
+    live("/", DraftSetupLive, :new)
+    live("/draft/:id", DraftLive, :show)
   end
 
   # Other scopes may use custom stacks.
@@ -36,10 +36,10 @@ defmodule DraftrWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      live_dashboard "/dashboard", metrics: DraftrWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      live_dashboard("/dashboard", metrics: DraftrWeb.Telemetry)
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end
 end
