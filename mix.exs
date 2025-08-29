@@ -11,7 +11,7 @@ defmodule Draftr.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [listeners()]
+      listeners: listeners()
     ]
   end
 
