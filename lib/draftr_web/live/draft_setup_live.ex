@@ -202,97 +202,130 @@ defmodule DraftrWeb.DraftSetupLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id="draft-creator-container" phx-hook="DraftCreator" class="w-full max-w-xl mx-auto mt-4 sm:mt-10 p-5 sm:p-7 rounded-lg shadow-lg bg-gradient-to-br from-base-200 to-base-300 text-base-content">
-      <div class="mb-6 pb-4 border-b border-base-300">
-        <h1 class="text-2xl sm:text-3xl font-bold text-primary">Create a New Draft</h1>
-      </div>
-      <form phx-submit="start_draft" phx-change="form_change">
-        <div class="mb-5">
-          <label class="block mb-2 font-semibold" for="draft_title">Draft Title</label>
-          <input id="draft_title" name="draft_title" type="text" value={@draft_title} placeholder="Enter draft title" class="w-full px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200" />
-        </div>
-        <div class="mb-5 p-4 bg-base-300/50 rounded-lg shadow-inner">
-          <h2 class="block mb-3 font-semibold text-lg">Leagues</h2>
+    <div id="draft-creator-container" phx-hook="DraftCreator" class="container mx-auto max-w-2xl">
+      <div class="card-body bg-base-300/50">
+        <h1 class="text-3xl sm:text-3xl font-bold text-accent">Create a New Draft</h1>
+        <form phx-submit="start_draft" phx-change="form_change">
+          <div class="pt-12">
+            <label class="block mb-2 text-xl font-semibold" for="draft_title">Draft Title</label>
+            <input
+              id="draft_title"
+              name="draft_title"
+              type="text"
+              value={@draft_title}
+              placeholder="Enter draft title"
+              class="input"
+            />
+          </div>
+          <h2 class="font-semibold text-xl pt-12">Leagues</h2>
           <div id="leagues-list" phx-hook="AnimatedList" class="leagues-list">
             <%= for league_idx <- 1..@num_leagues do %>
-              <div data-league-item class="mb-2 flex items-center transition-height">
+              <div data-league-item class="join mb-2 flex items-center transition-height">
                 <input
                   type="text"
                   name={"league_name_#{league_idx}"}
-                  value={Map.get(@league_names, league_idx, "League #{league_idx}")}
+                  value={Map.get(@league_names, league_idx, "")}
                   placeholder="League name"
-                  class="flex-1 px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  class="input"
                 />
-                <button type="button" phx-click="remove_league" phx-value-index={league_idx} class="ml-2 p-1.5 rounded-md hover:bg-base-100 transition-colors" aria-label="Remove league">
+                <button
+                  type="button"
+                  phx-click="remove_league"
+                  phx-value-index={league_idx}
+                  class="btn btn-outline btn-square btn-error"
+                  aria-label="Remove league"
+                >
                   <.icon name="hero-x-mark" class="size-5 text-error" />
                 </button>
               </div>
             <% end %>
           </div>
-          <div class="mt-3">
-            <button type="button" phx-click="add_league" class="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-sm flex items-center hover:shadow-md transition-all duration-200">
+          <div class="mt-4">
+            <button type="button" phx-click="add_league" class="btn btn-primary">
               <.icon name="hero-plus" class="size-4 mr-1" /> Add League
             </button>
           </div>
-          <p class="text-sm text-base-content/70 mt-2">Minimum of 2 members per league required</p>
-        </div>
+          <p class="text-sm text-base-content/70 pt-2">Minimum of 2 members per league required</p>
 
-        <div class="mb-5 p-4 bg-base-300/50 rounded-lg shadow-inner">
-          <h2 class="block mb-3 font-semibold text-lg">Members</h2>
+          <h2 class="font-semibold text-lg pt-12">Members</h2>
           <div id="members-list" phx-hook="AnimatedList" class="members-list">
             <%= for {member, idx} <- Enum.with_index(@members) do %>
-              <div data-member-item class="mb-2 flex items-center transition-height">
-                <input type="text" name={"member_#{idx}"} value={member} placeholder="Member name" class="flex-1 px-3 py-2.5 border border-base-300 rounded-md bg-base-100 text-base-content shadow-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200" />
-                <button type="button" phx-click="remove_member" phx-value-index={idx} class="ml-2 p-1.5 rounded-md hover:bg-base-100 transition-colors" aria-label="Remove member">
+              <div data-member-item class="join mb-2 flex items-center transition-height">
+                <input
+                  type="text"
+                  name={"member_#{idx}"}
+                  value={member}
+                  placeholder="Member name"
+                  class="input"
+                />
+                <button
+                  type="button"
+                  phx-click="remove_member"
+                  phx-value-index={idx}
+                  class="btn btn-outline btn-square btn-error"
+                  aria-label="Remove member"
+                >
                   <.icon name="hero-x-mark" class="size-5 text-error" />
                 </button>
               </div>
             <% end %>
           </div>
-          <div class="mt-3">
-            <button type="button" phx-click="add_member" class="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-sm flex items-center hover:shadow-md transition-all duration-200">
+          <div class="mt-4">
+            <button type="button" phx-click="add_member" class="btn btn-primary">
               <.icon name="hero-plus" class="size-4 mr-1" /> Add Member
             </button>
           </div>
-        </div>
 
-        <div class="mt-6 flex justify-center">
-          <button type="submit" class="w-full px-4 py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-content rounded-md shadow-md font-semibold text-center text-lg hover:shadow-lg hover:translate-y-[-2px] transition-all duration-300">Generate Draft</button>
-        </div>
-        <%= if flash = Phoenix.Flash.get(@flash, :info) do %>
-          <div class="mt-4 p-3 bg-gradient-to-r from-info to-info/80 text-info-content rounded-md shadow-sm animate-fade-in">
-            <%= flash %>
+          <div class="mt-6 flex justify-center">
+            <button type="submit" class="btn btn-secondary">Generate Draft</button>
+          </div>
+          <%= if flash = Phoenix.Flash.get(@flash, :info) do %>
+            <div class="mt-4 p-3 alert alert-info alert-soft animate-fade-in">
+              {flash}
+            </div>
+          <% end %>
+          <%= if flash = Phoenix.Flash.get(@flash, :error) do %>
+            <div class="mt-4 p-3 alert alert-error alert-soft animate-fade-in">
+              {flash}
+            </div>
+          <% end %>
+        </form>
+        <%= if @link do %>
+          <div class="card mt-20 shadow bg-base-300">
+            <div class="card-body">
+              <p class="card-title">Share this link with your league members:</p>
+              <div class="card bg-base-100 flex-row">
+                <p
+                  id="draft-link"
+                  class="h-24 font-mono text-md text-accent p-4 place-content-center"
+                >
+                  {@full_url}
+                </p>
+                <button
+                  id="copy-button"
+                  phx-hook="CopyToClipboard"
+                  data-copy-target="draft-link"
+                  class="btn btn-lg btn-primary h-24"
+                  aria-label="Copy link"
+                >
+                  <span class="flex items-center justify-center">
+                    <.icon name="hero-document-duplicate" class="size-5" />
+                    <span data-feedback class="ml-1 text-xs">Copy</span>
+                  </span>
+                </button>
+              </div>
+              <div class="mt-4">
+                <a
+                  href={@link}
+                  class="px-5 py-2.5 btn btn-primary"
+                >
+                  Go to Draft
+                </a>
+              </div>
+            </div>
           </div>
         <% end %>
-        <%= if flash = Phoenix.Flash.get(@flash, :error) do %>
-          <div class="mt-4 p-3 bg-gradient-to-r from-error to-error/80 text-error-content rounded-md shadow-sm">
-            <%= flash %>
-          </div>
-        <% end %>
-      </form>
-      <%= if @link do %>
-        <div class="mt-6 p-5 bg-gradient-to-r from-success to-success/80 text-success-content rounded-md shadow-md">
-          <p class="mb-3 font-semibold">Share this link with your league members:</p>
-          <div class="flex flex-col sm:flex-row mb-3">
-            <p id="draft-link" class="bg-base-100 p-3 rounded-t sm:rounded-t-none sm:rounded-l-md border border-base-300 text-base-content font-mono text-sm break-all flex-1 shadow-inner"><%= @full_url %></p>
-            <button
-              id="copy-button"
-              phx-hook="CopyToClipboard"
-              data-copy-target="draft-link"
-              class="p-3 bg-base-100 rounded-b sm:rounded-b-none sm:rounded-r-md border border-t-0 sm:border-t sm:border-l-0 border-base-300 text-base-content hover:bg-base-200 transition-colors duration-200"
-              aria-label="Copy link"
-            >
-              <span class="flex items-center justify-center">
-                <.icon name="hero-document-duplicate" class="size-5 text-primary" />
-                <span data-feedback class="ml-1 text-xs">Copy</span>
-              </span>
-            </button>
-          </div>
-          <div class="mt-4">
-            <a href={@link} class="px-5 py-2.5 bg-gradient-to-r from-info to-info/80 text-info-content rounded-md shadow-sm inline-block hover:shadow-md transition-all duration-200">Go to Draft</a>
-          </div>
-        </div>
-      <% end %>
+      </div>
     </div>
     """
   end
